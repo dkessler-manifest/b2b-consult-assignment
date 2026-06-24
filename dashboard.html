@@ -1,0 +1,842 @@
+<title>Manifest Law · B2B Attorney Hub</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+:root {
+  --ground:     #F8F5F1;
+  --surface:    #EDE7DF;
+  --border:     #D8CFC4;
+  --text:       #1A0C04;
+  --muted:      #7A6958;
+  --accent:     #3D2817;
+  --accent-h:   #2D1C10;
+  --gold:       #A07820;
+  --green:      #1E5C3A;
+  --green-bg:   #EAF4EE;
+  --amber:      #7A5200;
+  --amber-bg:   #FEF3DC;
+  --red:        #7A1A1A;
+  --red-bg:     #FDEAEA;
+  --radius:     10px;
+  --serif:      Georgia, 'Times New Roman', serif;
+  --sans:       'Helvetica Neue', Arial, sans-serif;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--ground); color: var(--text); font-family: var(--sans); font-size: 15px; line-height: 1.5; min-height: 100vh; }
+
+/* ── Header ── */
+.hdr { background: var(--accent); color: #fff; padding: 14px 32px; display: flex; align-items: center; gap: 14px; }
+.hdr-logo { font-family: var(--serif); font-size: 20px; font-weight: bold; letter-spacing: -.3px; }
+.hdr-sep  { width: 1px; height: 20px; background: rgba(255,255,255,.3); }
+.hdr-sub  { font-size: 12px; text-transform: uppercase; letter-spacing: 1.5px; color: rgba(255,255,255,.6); font-weight: 500; }
+.hdr-right { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+.src-badge { font-size: 11px; padding: 3px 10px; border-radius: 100px; background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.2); color: rgba(255,255,255,.65); }
+.src-badge.live { background: rgba(30,92,58,.5); border-color: rgba(30,92,58,.7); color: #a3e4b8; }
+.btn-refresh {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 7px 16px; background: rgba(255,255,255,.12); border: 1.5px solid rgba(255,255,255,.3);
+  border-radius: 8px; color: #fff; font-size: 13px; font-weight: 600; cursor: pointer;
+  font-family: var(--sans); transition: background .18s; white-space: nowrap;
+}
+.btn-refresh:hover:not(:disabled) { background: rgba(255,255,255,.22); }
+.btn-refresh:disabled { opacity: .5; cursor: not-allowed; }
+
+/* ── Shell ── */
+.shell { max-width: 1080px; margin: 0 auto; padding: 40px 24px 80px; }
+
+/* ── Tabs ── */
+.tabs { display: flex; border-bottom: 2px solid var(--border); margin-bottom: 36px; }
+.tab-btn {
+  padding: 12px 20px; font-size: 14px; font-weight: 600; color: var(--muted);
+  background: transparent; border: none; cursor: pointer; font-family: var(--sans);
+  border-bottom: 2px solid transparent; margin-bottom: -2px; transition: all .18s;
+}
+.tab-btn:hover { color: var(--text); }
+.tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+.tab-btn.locked { opacity: .5; cursor: default; pointer-events: none; }
+.tab-soon { font-size: 10px; font-weight: 700; text-transform: uppercase; background: var(--border); color: var(--muted); border-radius: 4px; padding: 2px 5px; margin-left: 6px; }
+
+/* ── Flip Cards ── */
+.cards-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
+
+.flip-scene { perspective: 1100px; }
+.flip-card {
+  position: relative; height: 440px;
+  transform-style: preserve-3d;
+  transition: transform 0.55s cubic-bezier(0.45, 0.05, 0.25, 1);
+  cursor: pointer; user-select: none;
+}
+.flip-card.flipped { transform: rotateY(180deg); }
+
+.flip-face {
+  position: absolute; inset: 0;
+  backface-visibility: hidden; -webkit-backface-visibility: hidden;
+  border-radius: var(--radius); overflow: hidden; border: 1.5px solid var(--border);
+}
+.flip-front { background: #fff; display: flex; flex-direction: column; overflow-y: auto; }
+.flip-back {
+  transform: rotateY(180deg);
+  background: var(--accent); border-color: var(--accent); color: #fff;
+  display: flex; flex-direction: column; padding: 24px 22px 18px;
+}
+
+/* Front face content */
+.fc-header { padding: 18px 20px 14px; border-bottom: 1px solid var(--border); }
+.fc-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; margin-bottom: 4px; }
+.fc-name { font-family: var(--serif); font-size: 17px; font-weight: bold; color: var(--text); line-height: 1.25; }
+.fc-sub  { font-size: 12px; color: var(--muted); margin-top: 2px; }
+.fc-badges { display: flex; flex-direction: column; align-items: flex-end; gap: 5px; }
+.fc-status { font-size: 11px; font-weight: 600; padding: 3px 9px; border-radius: 6px; border: 1px solid transparent; white-space: nowrap; }
+.fc-status.green { background: #f0fdf4; color: #15803d; border-color: #bbf7d0; }
+.fc-status.red   { background: var(--red-bg); color: var(--red); border-color: rgba(122,26,26,.2); }
+.fc-email { font-size: 12px; color: var(--muted); margin: 6px 0 4px; }
+.fc-type  { font-size: 11px; text-transform: uppercase; letter-spacing: .9px; color: var(--muted); margin-bottom: 8px; }
+.fc-sizes { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 10px; }
+.fc-size  { font-size: 11px; padding: 2px 8px; border-radius: 4px; border: 1px solid var(--border); color: var(--muted); background: var(--surface); }
+.fc-dns   { font-size: 11px; color: var(--red); font-style: italic; margin-bottom: 6px; }
+.fc-cta {
+  display: block; width: 100%; padding: 9px 0; background: var(--accent); color: #fff; border: none;
+  border-radius: 7px; font-size: 13px; font-weight: 700; cursor: pointer; font-family: var(--sans);
+  text-align: center; text-decoration: none; transition: background .18s; margin-top: 4px;
+}
+.fc-cta:hover { background: var(--accent-h); }
+.fc-cta.off { background: var(--surface); color: var(--muted); border: 1.5px solid var(--border); cursor: default; }
+.fc-body { padding: 14px 20px; display: flex; flex-direction: column; gap: 12px; flex: 1; }
+.fc-section-lbl { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); margin-bottom: 6px; }
+.fc-pills { display: flex; flex-wrap: wrap; gap: 5px; }
+.fc-pill { font-size: 11px; padding: 3px 9px; border-radius: 5px; border: 1px solid var(--border); color: var(--text); background: #fff; }
+.fc-pill.strong { background: var(--accent); color: #fff; border-color: var(--accent); }
+.fc-pill.more   { background: transparent; color: var(--muted); }
+.fc-hint { padding: 10px 20px 14px; font-size: 11px; color: var(--muted); text-align: center; border-top: 1px solid var(--surface); position: sticky; bottom: 0; background: #fff; }
+
+/* Capacity badge (front face) */
+.cap-badge { padding: 3px 9px; border-radius: 100px; font-size: 11px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; border: 1.5px solid transparent; }
+.cap-badge.high   { background: var(--green-bg); color: var(--green);  border-color: #bbf7d0; }
+.cap-badge.medium { background: var(--amber-bg); color: var(--amber);  border-color: #fde68a; }
+.cap-badge.low    { background: var(--red-bg);   color: var(--red);    border-color: rgba(122,26,26,.2); }
+
+/* Back face content */
+.fb-eyebrow { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.2px; color: rgba(255,255,255,.45); margin-bottom: 10px; }
+.fb-pct-row { display: flex; align-items: baseline; gap: 7px; margin-bottom: 10px; }
+.fb-pct     { font-family: var(--serif); font-size: 52px; font-weight: bold; line-height: 1; color: #fff; }
+.fb-word    { font-size: 15px; color: rgba(255,255,255,.5); }
+.fb-track   { height: 6px; background: rgba(255,255,255,.15); border-radius: 100px; overflow: hidden; margin-bottom: 12px; }
+.fb-bar     { height: 100%; border-radius: 100px; }
+.fb-cap-inv { display: inline-block; padding: 3px 11px; border-radius: 100px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; }
+.fb-cap-inv.high   { background: rgba(34,197,94,.2);  color: #86efac; border: 1.5px solid rgba(34,197,94,.3); }
+.fb-cap-inv.medium { background: rgba(245,158,11,.2); color: #fde68a; border: 1.5px solid rgba(245,158,11,.3); }
+.fb-cap-inv.low    { background: rgba(239,68,68,.2);  color: #fca5a5; border: 1.5px solid rgba(239,68,68,.3); }
+.fb-divider { height: 1px; background: rgba(255,255,255,.15); margin: 16px 0; }
+.fb-prod-item { display: flex; align-items: center; gap: 8px; padding: 4px 0; font-size: 13px; color: rgba(255,255,255,.75); }
+.fb-dot { width: 5px; height: 5px; border-radius: 50%; background: rgba(255,255,255,.35); flex-shrink: 0; }
+.fb-hint { margin-top: auto; padding-top: 14px; font-size: 11px; color: rgba(255,255,255,.3); text-align: center; }
+
+/* ── Filter bar ── */
+.filter-bar { margin-bottom: 22px; }
+.filter-bar-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+.filter-count { font-size: 13px; color: var(--muted); }
+.filter-toggle {
+  display: inline-flex; align-items: center; gap: 7px; padding: 7px 16px;
+  border: 1.5px solid var(--border); border-radius: 100px; background: #fff;
+  font-size: 13px; font-weight: 600; cursor: pointer; font-family: var(--sans); color: var(--text); transition: all .15s;
+}
+.filter-toggle:hover { border-color: var(--accent); color: var(--accent); }
+.filter-toggle.on { border-color: var(--accent); background: var(--accent); color: #fff; }
+.filter-badge { background: #fff; color: var(--accent); border-radius: 100px; font-size: 10px; font-weight: 800; padding: 1px 7px; }
+.filter-toggle:not(.on) .filter-badge { background: var(--accent); color: #fff; }
+.filter-panel { background: var(--surface); border: 1.5px solid var(--border); border-radius: var(--radius); padding: 22px 24px 18px; display: flex; flex-direction: column; gap: 22px; margin-bottom: 4px; }
+.fp-title { font-family: var(--serif); font-size: 15px; font-weight: bold; color: var(--text); margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+.visa-group-lbl { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.2px; color: var(--muted); margin-bottom: 8px; }
+.pills { display: flex; flex-wrap: wrap; gap: 8px; }
+.pill {
+  padding: 6px 14px; border: 1.5px solid var(--border); border-radius: 100px;
+  background: #fff; font-size: 13px; cursor: pointer; transition: all .15s;
+  font-family: var(--sans); font-weight: 500; color: var(--text);
+}
+.pill:hover { border-color: var(--accent); color: var(--accent); }
+.pill.on { background: var(--accent); border-color: var(--accent); color: #fff; }
+.clear-btn { font-size: 12px; font-weight: 600; color: var(--muted); background: transparent; border: none; cursor: pointer; font-family: var(--sans); text-decoration: underline; text-underline-offset: 3px; }
+.clear-btn:hover { color: var(--accent); }
+
+/* ── Wizard ── */
+.wizard-inner { max-width: 680px; margin: 0 auto; }
+.track { display: flex; align-items: center; margin-bottom: 48px; }
+.track-dot {
+  width: 28px; height: 28px; border-radius: 50%; border: 2px solid var(--border);
+  background: var(--ground); display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 700; color: var(--muted); flex-shrink: 0; position: relative; transition: all .25s;
+}
+.track-dot.done   { background: var(--accent); border-color: var(--accent); color: #fff; }
+.track-dot.active { border-color: var(--accent); color: var(--accent); box-shadow: 0 0 0 3px rgba(61,40,23,.12); }
+.track-label { position: absolute; top: 34px; left: 50%; transform: translateX(-50%); font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: .8px; color: var(--muted); white-space: nowrap; }
+.track-dot.active .track-label { color: var(--accent); }
+.track-line { flex: 1; height: 2px; background: var(--border); }
+.track-line.done { background: var(--accent); }
+.step { animation: fadeUp .22s ease; }
+@keyframes fadeUp { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:none; } }
+.step-eyebrow { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:1.4px; color:var(--muted); margin-bottom:10px; }
+.step-title { font-family:var(--serif); font-size:28px; font-weight:normal; color:var(--text); margin-bottom:6px; }
+.step-sub { font-size:14px; color:var(--muted); margin-bottom:32px; }
+.size-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:32px; }
+.size-btn { padding:24px 20px; border:2px solid var(--border); border-radius:var(--radius); background:#fff; cursor:pointer; text-align:left; transition:all .18s; font-family:var(--sans); }
+.size-btn:hover { border-color:var(--accent); }
+.size-btn.on { border-color:var(--accent); background:var(--accent); color:#fff; }
+.size-name { font-size:16px; font-weight:700; display:block; }
+.size-desc { font-size:12px; color:var(--muted); margin-top:4px; display:block; }
+.size-btn.on .size-desc { color:rgba(255,255,255,.65); }
+.visa-unknown-btn { width:100%; padding:16px 20px; border:2px solid var(--border); border-radius:var(--radius); background:#fff; cursor:pointer; display:flex; align-items:center; gap:14px; font-family:var(--sans); margin-bottom:20px; transition:all .18s; }
+.visa-unknown-btn:hover { border-color:var(--accent); }
+.visa-unknown-btn.on { border-color:var(--accent); background:var(--accent); color:#fff; }
+.visa-unknown-btn.on .vub-desc { color:rgba(255,255,255,.65); }
+.vub-icon  { font-size:20px; flex-shrink:0; }
+.vub-title { font-size:15px; font-weight:700; display:block; }
+.vub-desc  { font-size:12px; color:var(--muted); display:block; margin-top:2px; }
+.visa-grp-lbl { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:1.2px; color:var(--muted); margin-bottom:10px; }
+.visa-pills-wrap { display:flex; flex-direction:column; gap:22px; }
+.vpills { display:flex; flex-wrap:wrap; gap:8px; }
+.vpill { padding:6px 14px; border:1.5px solid var(--border); border-radius:100px; background:#fff; font-size:13px; cursor:pointer; transition:all .15s; font-family:var(--sans); font-weight:500; color:var(--text); }
+.vpill:hover { border-color:var(--accent); color:var(--accent); }
+.vpill.on { background:var(--accent); border-color:var(--accent); color:#fff; }
+.date-input { width:100%; padding:14px 16px; border:2px solid var(--border); border-radius:var(--radius); background:#fff; font-size:16px; font-family:var(--sans); color:var(--text); transition:border-color .18s; margin-bottom:8px; }
+.date-input:focus { outline:none; border-color:var(--accent); }
+.nav { display:flex; justify-content:space-between; align-items:center; margin-top:32px; }
+.nav-r { display:flex; gap:10px; align-items:center; }
+.btn { padding:12px 24px; border-radius:var(--radius); font-size:14px; font-weight:600; cursor:pointer; border:none; font-family:var(--sans); transition:all .18s; display:inline-flex; align-items:center; gap:6px; }
+.btn-primary { background:var(--accent); color:#fff; }
+.btn-primary:hover:not(:disabled) { background:var(--accent-h); }
+.btn-primary:disabled { opacity:.4; cursor:not-allowed; }
+.btn-ghost { background:transparent; color:var(--muted); border:1.5px solid var(--border); }
+.btn-ghost:hover { border-color:var(--accent); color:var(--accent); }
+.btn-text  { background:transparent; color:var(--muted); padding:12px 0; }
+.btn-text:hover { color:var(--text); }
+.sel-count { font-size:13px; color:var(--muted); margin-top:12px; }
+.sel-count strong { color:var(--accent); }
+.results-meta { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:28px; padding-bottom:20px; border-bottom:1px solid var(--border); }
+.meta-chip { padding:5px 12px; background:var(--surface); border-radius:100px; font-size:12px; font-weight:600; border:1px solid var(--border); }
+.results-list { display:flex; flex-direction:column; gap:14px; }
+.atty-card { background:#fff; border:1.5px solid var(--border); border-radius:var(--radius); overflow:hidden; display:flex; position:relative; }
+.score-bar { width:5px; flex-shrink:0; }
+.score-bar.perfect { background:var(--green); }
+.score-bar.strong  { background:var(--accent); }
+.score-bar.neutral { background:var(--gold); }
+.atty-body  { flex:1; padding:20px 22px; min-width:0; }
+.atty-rank  { position:absolute; right:16px; bottom:8px; font-family:var(--serif); font-size:72px; font-weight:bold; color:var(--surface); line-height:1; user-select:none; pointer-events:none; }
+.atty-top   { display:flex; align-items:flex-start; justify-content:space-between; gap:12px; margin-bottom:12px; }
+.atty-name  { font-family:var(--serif); font-size:20px; font-weight:normal; }
+.tag-row    { display:flex; flex-wrap:wrap; gap:6px; margin-top:5px; }
+.tag { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.8px; padding:3px 9px; border-radius:4px; background:var(--surface); color:var(--muted); border:1px solid var(--border); }
+.tag.seller { background:rgba(61,40,23,.08); color:var(--accent); border-color:rgba(61,40,23,.2); }
+.tag.lead   { background:rgba(160,120,32,.1); color:var(--gold); border-color:rgba(160,120,32,.3); }
+.score-display { text-align:right; flex-shrink:0; }
+.score-num   { font-size:26px; font-weight:700; font-family:var(--serif); color:var(--accent); line-height:1; }
+.score-lbl   { font-size:10px; text-transform:uppercase; letter-spacing:.8px; color:var(--muted); margin-top:2px; }
+.match-pills { display:flex; flex-wrap:wrap; gap:6px; margin-top:12px; }
+.match-pill  { font-size:11px; font-weight:600; padding:3px 10px; border-radius:100px; display:flex; align-items:center; gap:5px; }
+.match-pill.pref    { background:var(--green-bg); color:var(--green); }
+.match-pill.neutral { background:var(--amber-bg); color:var(--amber); }
+.match-pill::before { content:''; display:inline-block; width:6px; height:6px; border-radius:50%; background:currentColor; }
+.btn-book { margin-top:14px; padding:10px 20px; background:var(--accent); color:#fff; border:none; border-radius:8px; font-size:13px; font-weight:700; cursor:pointer; font-family:var(--sans); text-decoration:none; display:inline-flex; align-items:center; gap:6px; transition:background .18s; }
+.btn-book:hover { background:var(--accent-h); }
+.btn-book-off { margin-top:14px; padding:10px 20px; background:var(--surface); color:var(--muted); border:1.5px solid var(--border); border-radius:8px; font-size:13px; font-weight:700; font-family:var(--sans); display:inline-flex; align-items:center; gap:6px; }
+.no-results { text-align:center; padding:56px 0; color:var(--muted); }
+.no-results-icon { font-size:40px; margin-bottom:16px; opacity:.3; }
+.no-results h3 { font-family:var(--serif); font-size:20px; color:var(--text); margin-bottom:8px; font-weight:normal; }
+.footer-actions { margin-top:32px; padding-top:24px; border-top:1px solid var(--border); display:flex; justify-content:space-between; }
+.spinner { width:14px; height:14px; border:2px solid rgba(255,255,255,.3); border-top-color:#fff; border-radius:50%; animation:spin .7s linear infinite; flex-shrink:0; }
+@keyframes spin { to { transform:rotate(360deg); } }
+@media (max-width:600px) {
+  .shell { padding:28px 16px 60px; }
+  .cards-grid { grid-template-columns:1fr; }
+  .size-grid { grid-template-columns:1fr; }
+  .atty-rank { display:none; }
+  .hdr-sub, .src-badge { display:none; }
+  .hdr { padding:12px 16px; }
+}
+@media (prefers-reduced-motion:reduce) { .step, .spinner { animation:none; } .flip-card { transition:none; } }
+</style>
+
+<header class="hdr">
+  <span class="hdr-logo">Manifest Law</span>
+  <span class="hdr-sep"></span>
+  <span class="hdr-sub">B2B Attorney Hub</span>
+  <div class="hdr-right">
+    <span class="src-badge" id="src-badge">Fallback data</span>
+    <button class="btn-refresh" id="refresh-btn" onclick="refreshBQ()">↻ Refresh BQ</button>
+  </div>
+</header>
+
+<div class="shell">
+  <div class="tabs">
+    <button class="tab-btn active" id="tab-pods" onclick="switchTab('pods')">B2B Pods</button>
+    <button class="tab-btn" id="tab-route" onclick="gateRoute()">Route Consultation</button>
+  </div>
+
+  <div id="pods-view">
+    <div class="filter-bar" id="filter-bar"></div>
+    <div class="cards-grid" id="cards-grid"></div>
+  </div>
+
+  <!-- Password modal -->
+  <div id="pw-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:1000;display:none;align-items:center;justify-content:center">
+    <div style="background:#fff;border-radius:14px;padding:32px 28px;width:320px;box-shadow:0 20px 60px rgba(0,0,0,.25);font-family:var(--sans)">
+      <p style="font-family:var(--serif);font-size:18px;font-weight:bold;color:var(--text);margin-bottom:6px">Sales Team Access</p>
+      <p style="font-size:13px;color:var(--muted);margin-bottom:20px">Enter the password to access consultation routing.</p>
+      <input id="pw-input" type="password" placeholder="Password" onkeydown="if(event.key==='Enter')checkPw()"
+        style="width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:8px;font-size:14px;font-family:var(--sans);outline:none;box-sizing:border-box;margin-bottom:8px">
+      <p id="pw-error" style="font-size:12px;color:var(--red);min-height:16px;margin-bottom:12px"></p>
+      <div style="display:flex;gap:8px">
+        <button onclick="closePwModal()" style="flex:1;padding:9px;border:1.5px solid var(--border);background:#fff;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:var(--sans);color:var(--muted)">Cancel</button>
+        <button onclick="checkPw()" style="flex:1;padding:9px;background:var(--accent);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--sans)">Enter</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="route-view" style="display:none">
+    <div class="wizard-inner">
+      <div class="track" id="track"></div>
+      <div id="step-content"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ── Config ────────────────────────────────────────────────────────── */
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx5CWOVy2RXr9WkHe-U-OkA5J2ajdxKqQZknyli8kO8fgxOiN0kbLFfruw1RVdJUcMz/exec';
+
+/* ── Constants ─────────────────────────────────────────────────────── */
+const VISA_GROUPS = {
+  'H-1B':                ['H-1B Cap','H-1B Transfer/Ext','H-1B Amendment'],
+  'L Visa':              ['L-1A/L-1B','Blanket L'],
+  'O Visa':              ['O-1A/O-1B'],
+  'E & TN':              ['E-1','E-2','E-3','TN','J-1','B-1'],
+  'Employment Immigrant':['EB-1A','EB-1B','EB-1C','EB-2 NIW','EB-2 PERM','EB-3 PERM','EB-4','EB-5','PERM/Labor Cert'],
+  'Adjustment & Status': ['Green Card/AOS','I-130/Family','EAD/AP','I-131','I-539','Removal of Conditions','Naturalization'],
+  'Other':               ['RFE Response','O-2 Support'],
+};
+const CLIENT_SIZE_DESC = { 'Micro SMB':'Under 10 employees', 'SMB':'10–250 employees', 'Mid-Market':'250–2,000 employees', 'Enterprise':'2,000+ employees' };
+
+/* ── Runtime data ───────────────────────────────────────────────────── */
+let ALL_ATTORNEYS = [];
+let ATTORNEYS     = [];   // sellers only, for wizard
+let POD_CAPACITY  = {};
+
+/* ── Fallback data ──────────────────────────────────────────────────── */
+const FALLBACK_ALL = [
+  { name:'Matt Dillinger',   email:'m.dillinger@manifestlaw.com', podSlug:'matt-dillinger',    clientSizes:['SMB','Mid-Market','Enterprise'],        tags:['Seller','Practice Lead'],          doNotSend:false, link:null, languages:['English'],             industries:['Tech','AI / Machine Learning','Life Sciences / Biotech','Academic Researchers','Artists','Filmmakers / Television','Business / Entrepreneurship'], yearsOfExperience:'13+', isPracticeLead:true,  scores:{'H-1B Cap':5,'H-1B Transfer/Ext':5,'H-1B Amendment':5,'O-1A/O-1B':5,'EB-1A':5,'EB-1B':5,'EB-1C':5,'EB-2 NIW':5,'EB-2 PERM':5,'EB-3 PERM':5,'L-1A/L-1B':5,'Blanket L':5,'TN':5,'J-1':4,'E-1':2,'E-2':4,'E-3':5,'PERM/Labor Cert':5,'Green Card/AOS':5,'EAD/AP':5,'RFE Response':5,'I-130/Family':5,'Removal of Conditions':5,'Naturalization':5,'I-539':5,'EB-4':2,'EB-5':2,'B-1':5,'I-131':5,'O-2 Support':3} },
+  { name:'Nandini Nair',     email:'n.nair@manifestlaw.com',       podSlug:'nandini-nair',      clientSizes:['SMB','Mid-Market'],                     tags:['Seller','Practice Lead'],          doNotSend:false, link:null, languages:['English','Malayalam'],  industries:['Tech','Life Sciences / Biotech','Artists','Business / Entrepreneurship','Social Impact / Nonprofits','Fashion & Design'], yearsOfExperience:'28+', isPracticeLead:true,  scores:{'H-1B Cap':4,'H-1B Transfer/Ext':4,'H-1B Amendment':4,'O-1A/O-1B':3,'EB-1A':4,'EB-1B':2,'EB-1C':4,'EB-2 NIW':4,'EB-2 PERM':4,'EB-3 PERM':4,'L-1A/L-1B':4,'Blanket L':4,'TN':4,'J-1':2,'E-1':0,'E-2':3,'E-3':4,'PERM/Labor Cert':4,'Green Card/AOS':4,'EAD/AP':4,'RFE Response':4,'I-130/Family':4,'Removal of Conditions':4,'Naturalization':4,'I-539':4,'EB-4':0,'EB-5':2,'B-1':4,'I-131':4,'O-2 Support':3} },
+  { name:'Arielle Sheinfeld', email:'a.sheinfeld@manifestlaw.com', podSlug:'arielle-sheinfeld', clientSizes:['Micro SMB','SMB','Mid-Market'],          tags:['Seller','Practice Lead'],          doNotSend:false, link:null, languages:['English','Hebrew'],    industries:['Tech','AI / Machine Learning','Life Sciences / Biotech','Academic Researchers','Artists','Filmmakers / Television','Business / Entrepreneurship','Sports / Athletics','Social Impact / Nonprofits','Fashion & Design'], yearsOfExperience:'5+', isPracticeLead:true, scores:{'H-1B Cap':2,'H-1B Transfer/Ext':3,'H-1B Amendment':3,'O-1A/O-1B':4,'EB-1A':4,'EB-1B':4,'EB-1C':4,'EB-2 NIW':4,'EB-2 PERM':1,'EB-3 PERM':1,'L-1A/L-1B':5,'Blanket L':5,'TN':5,'J-1':1,'E-1':3,'E-2':3,'E-3':3,'PERM/Labor Cert':1,'Green Card/AOS':1,'EAD/AP':1,'RFE Response':5,'I-130/Family':1,'Removal of Conditions':3,'Naturalization':3,'I-539':3,'EB-4':1,'EB-5':1,'B-1':1,'I-131':1,'O-2 Support':1} },
+  { name:'Kyle McLaughlin',  email:'k.mclaughlin@manifestlaw.com', podSlug:'kyle-mclaughlin',   clientSizes:['SMB','Mid-Market'],                     tags:['Seller','Practice Lead'],          doNotSend:false, link:null, languages:['English'],             industries:['Tech','AI / Machine Learning','Life Sciences / Biotech','Academic Researchers','Business / Entrepreneurship'], yearsOfExperience:'13+', isPracticeLead:true, scores:{'H-1B Cap':5,'H-1B Transfer/Ext':5,'H-1B Amendment':5,'O-1A/O-1B':3,'EB-1A':3,'EB-1B':2,'EB-1C':5,'EB-2 NIW':3,'EB-2 PERM':5,'EB-3 PERM':5,'L-1A/L-1B':5,'Blanket L':5,'TN':5,'J-1':1,'E-1':2,'E-2':2,'E-3':5,'PERM/Labor Cert':5,'Green Card/AOS':5,'EAD/AP':5,'RFE Response':5,'I-130/Family':3,'Removal of Conditions':3,'Naturalization':2,'I-539':5,'EB-4':1,'EB-5':1,'B-1':3,'I-131':5,'O-2 Support':1} },
+  { name:'Nadia Zaidi',      email:'n.zaidi@manifestlaw.com',      podSlug:'nadia-lucia',       clientSizes:['SMB','Mid-Market','Enterprise'],        tags:['Seller','Practice Lead'],          doNotSend:true,  link:null, languages:['English','Urdu','Arabic'], industries:['Tech','AI / Machine Learning','Life Sciences / Biotech','Academic Researchers','Artists','Filmmakers / Television','Business / Entrepreneurship','Sports / Athletics','Social Impact / Nonprofits','Fashion & Design'], yearsOfExperience:'12+', isPracticeLead:true, scores:{'H-1B Cap':4,'H-1B Transfer/Ext':4,'H-1B Amendment':4,'O-1A/O-1B':5,'EB-1A':5,'EB-1B':5,'EB-1C':4,'EB-2 NIW':5,'EB-2 PERM':4,'EB-3 PERM':4,'L-1A/L-1B':4,'Blanket L':4,'TN':5,'J-1':4,'E-1':4,'E-2':4,'E-3':5,'PERM/Labor Cert':4,'Green Card/AOS':5,'EAD/AP':5,'RFE Response':5,'I-130/Family':5,'Removal of Conditions':4,'Naturalization':5,'I-539':4,'EB-4':1,'EB-5':1,'B-1':4,'I-131':5,'O-2 Support':5} },
+  { name:'Lucia Maxwell',    email:'l.maxwell@manifestlaw.com',    podSlug:'nadia-lucia',       clientSizes:['SMB','Mid-Market','Enterprise'],        tags:['Seller','Practice Lead'],          doNotSend:true,  link:null, languages:['English','Urdu','Arabic'], industries:['Tech','AI / Machine Learning','Life Sciences / Biotech','Academic Researchers','Artists','Filmmakers / Television','Business / Entrepreneurship','Sports / Athletics','Social Impact / Nonprofits','Fashion & Design'], yearsOfExperience:'12+', isPracticeLead:true, scores:{'H-1B Cap':4,'H-1B Transfer/Ext':4,'H-1B Amendment':4,'O-1A/O-1B':5,'EB-1A':5,'EB-1B':5,'EB-1C':4,'EB-2 NIW':5,'EB-2 PERM':4,'EB-3 PERM':4,'L-1A/L-1B':4,'Blanket L':4,'TN':5,'J-1':4,'E-1':4,'E-2':4,'E-3':5,'PERM/Labor Cert':4,'Green Card/AOS':5,'EAD/AP':5,'RFE Response':5,'I-130/Family':5,'Removal of Conditions':4,'Naturalization':5,'I-539':4,'EB-4':1,'EB-5':1,'B-1':4,'I-131':5,'O-2 Support':5} },
+  { name:'David Santiago',   email:'d.santiago@manifestlaw.com',   podSlug:'kyle-mclaughlin',   clientSizes:['Micro SMB','SMB'],                      tags:['Seller','Production Attorney'],    doNotSend:false, link:null, languages:['English','Spanish'],    industries:[], yearsOfExperience:'5+',  isPracticeLead:false, scores:{'H-1B Cap':4,'H-1B Transfer/Ext':4,'H-1B Amendment':4,'O-1A/O-1B':5,'EB-1A':5,'EB-1B':3,'EB-1C':4,'EB-2 NIW':5,'EB-2 PERM':4,'EB-3 PERM':4,'L-1A/L-1B':4,'Blanket L':3,'TN':4,'J-1':4,'E-1':4,'E-2':4,'E-3':3,'PERM/Labor Cert':4,'Green Card/AOS':4,'EAD/AP':4,'RFE Response':4,'I-130/Family':3,'Removal of Conditions':2,'Naturalization':4,'I-539':4,'EB-4':1,'EB-5':1,'B-1':4,'I-131':4,'O-2 Support':1} },
+  { name:'Mayra Faz',        email:'m.faz@manifestlaw.com',        podSlug:'nandini-nair',    clientSizes:['Micro SMB','SMB'],                      tags:['Production Attorney'],             doNotSend:false, link:null, languages:[],                      industries:[], yearsOfExperience:null, isPracticeLead:false, scores:{'H-1B Cap':3,'H-1B Transfer/Ext':4,'H-1B Amendment':4,'O-1A/O-1B':5,'EB-1A':5,'EB-1B':5,'EB-1C':4,'EB-2 NIW':5,'EB-2 PERM':1,'EB-3 PERM':1,'L-1A/L-1B':3,'Blanket L':3,'TN':3,'J-1':1,'E-1':1,'E-2':1,'E-3':2,'PERM/Labor Cert':1,'Green Card/AOS':5,'EAD/AP':5,'RFE Response':5,'I-130/Family':1,'Removal of Conditions':1,'Naturalization':1,'I-539':5,'EB-4':1,'EB-5':1,'B-1':1,'I-131':4,'O-2 Support':1} },
+  { name:'Cheryl Kilborn',   email:'c.kilborn@manifestlaw.com',    podSlug:'matt-dillinger',    clientSizes:['Micro SMB','SMB'],                      tags:['Production Attorney'],             doNotSend:false, link:null, languages:[],                      industries:[], yearsOfExperience:null, isPracticeLead:false, scores:{'H-1B Cap':5,'H-1B Transfer/Ext':5,'H-1B Amendment':5,'O-1A/O-1B':1,'EB-1A':1,'EB-1B':1,'EB-1C':5,'EB-2 NIW':3,'EB-2 PERM':5,'EB-3 PERM':5,'L-1A/L-1B':5,'Blanket L':5,'TN':5,'J-1':4,'E-1':1,'E-2':1,'E-3':5,'PERM/Labor Cert':5,'Green Card/AOS':4,'EAD/AP':5,'RFE Response':5,'I-130/Family':2,'Removal of Conditions':1,'Naturalization':4,'I-539':5,'EB-4':1,'EB-5':1,'B-1':1,'I-131':4,'O-2 Support':1} },
+  { name:'Blake Burch',      email:'b.burch@manifestlaw.com',      podSlug:'matt-dillinger',    clientSizes:['Micro SMB','SMB'],                      tags:['Production Attorney'],             doNotSend:false, link:null, languages:[],                      industries:[], yearsOfExperience:null, isPracticeLead:false, scores:{'H-1B Cap':5,'H-1B Transfer/Ext':5,'H-1B Amendment':5,'O-1A/O-1B':4,'EB-1A':4,'EB-1B':3,'EB-1C':5,'EB-2 NIW':4,'EB-2 PERM':5,'EB-3 PERM':5,'L-1A/L-1B':5,'Blanket L':5,'TN':4,'J-1':2,'E-1':1,'E-2':1,'E-3':5,'PERM/Labor Cert':5,'Green Card/AOS':5,'EAD/AP':5,'RFE Response':5,'I-130/Family':3,'Removal of Conditions':2,'Naturalization':3,'I-539':5,'EB-4':1,'EB-5':1,'B-1':1,'I-131':5,'O-2 Support':2} },
+  { name:'Ana Louzada',      email:'a.louzada@manifestlaw.com',    podSlug:'kyle-mclaughlin',   clientSizes:['Micro SMB','SMB'],                      tags:['Production Attorney'],             doNotSend:false, link:null, languages:[],                      industries:[], yearsOfExperience:null, isPracticeLead:false, scores:{} },
+];
+
+const FALLBACK_POD_CAPACITY = {
+  'matt-dillinger':    { podName:"Matt Dillinger's Pod",    utilization:0.25, label:'High',   lastRefreshed:'', productionAttorneys:['Cheryl Kilborn','Blake Burch','Mayra Faz'] },
+  'nandini-nair':      { podName:"Nandini Nair's Pod",      utilization:0.31, label:'High',   lastRefreshed:'', productionAttorneys:['Mayra Faz'] },
+  'kyle-mclaughlin':   { podName:"Kyle McLaughlin's Pod",   utilization:0.91, label:'Low',    lastRefreshed:'', productionAttorneys:['David Santiago','Ana Louzada'] },
+  'arielle-sheinfeld': { podName:"Arielle Sheinfeld's Pod", utilization:0.27, label:'High',   lastRefreshed:'', productionAttorneys:[] },
+  'nadia-lucia':       { podName:"Nadia & Lucia's Pod",     utilization:0.86, label:'Low',    lastRefreshed:'', productionAttorneys:[] },
+};
+
+/* ── Helpers ────────────────────────────────────────────────────────── */
+function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function shortLbl(s) { return s.replace(/\s*\([^)]*\)/g,'').replace(/\s*:\s*$/,'').trim(); }
+function uniq(arr) { return Array.from(new Set(arr.filter(Boolean))).sort(); }
+function mergeScores(a, b) { const o={...a}; for(const k in b) o[k]=Math.max(o[k]||0,b[k]||0); return o; }
+function fmtTs(ts) {
+  if (!ts) return '';
+  try { return new Date(ts).toLocaleDateString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}); }
+  catch(_){ return ts; }
+}
+
+/* ── Sheet loader ───────────────────────────────────────────────────── */
+let sheetSrc = 'fallback';
+
+async function loadSheet() {
+  if (!APPS_SCRIPT_URL) {
+    ALL_ATTORNEYS = FALLBACK_ALL.slice();
+    ATTORNEYS     = FALLBACK_ALL.filter(a => !a.doNotSend && a.tags.includes('Seller'));
+    POD_CAPACITY  = Object.assign({}, FALLBACK_POD_CAPACITY);
+    sheetSrc = 'fallback';
+    setSrcBadge();
+    return;
+  }
+  try {
+    const res  = await fetch(APPS_SCRIPT_URL);
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const text = await res.text();
+    let data;
+    try { data = JSON.parse(text); }
+    catch(_) { throw new Error('Non-JSON response (possible auth redirect) — open the Apps Script URL directly in your browser to check: ' + text.slice(0,120)); }
+    if (data.error) throw new Error(data.error);
+    if (!(data.attorneys||[]).length) throw new Error('empty response');
+    ALL_ATTORNEYS = data.attorneys;
+    ATTORNEYS     = data.attorneys.filter(a => !a.doNotSend && a.tags.includes('Seller'));
+    POD_CAPACITY  = data.podCapacity || {};
+    sheetSrc = 'live';
+  } catch(e) {
+    console.error('Sheet load failed:', e.message);
+    ALL_ATTORNEYS = FALLBACK_ALL.slice();
+    ATTORNEYS     = FALLBACK_ALL.filter(a => !a.doNotSend && a.tags.includes('Seller'));
+    POD_CAPACITY  = Object.assign({}, FALLBACK_POD_CAPACITY);
+    sheetSrc = 'fallback';
+  }
+  setSrcBadge();
+}
+
+function setSrcBadge() {
+  const el = document.getElementById('src-badge');
+  if (!el) return;
+  el.textContent = sheetSrc === 'live' ? 'Live data' : 'Fallback data';
+  el.classList.toggle('live', sheetSrc === 'live');
+}
+
+/* ── BQ Refresh ─────────────────────────────────────────────────────── */
+async function refreshBQ() {
+  if (!APPS_SCRIPT_URL) { alert('Set APPS_SCRIPT_URL to connect to Apps Script.'); return; }
+  const btn = document.getElementById('refresh-btn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Refreshing…';
+  try {
+    const url  = APPS_SCRIPT_URL + (APPS_SCRIPT_URL.includes('?') ? '&' : '?') + 'action=refreshBQ';
+    const res  = await fetch(url);
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+    if ((data.attorneys||[]).length) {
+      ALL_ATTORNEYS = data.attorneys;
+      ATTORNEYS     = data.attorneys.filter(a => !a.doNotSend && a.tags.includes('Seller'));
+      POD_CAPACITY  = data.podCapacity || {};
+      sheetSrc = 'live'; setSrcBadge();
+    }
+    renderCards();
+    btn.innerHTML = '✓ Updated';
+    setTimeout(() => { btn.innerHTML = '↻ Refresh BQ'; btn.disabled = false; }, 3000);
+  } catch(e) {
+    btn.innerHTML = '↻ Refresh BQ'; btn.disabled = false;
+    alert('Refresh failed: ' + e.message);
+  }
+}
+
+/* ── Route password gate ─────────────────────────────────────────────── */
+let routeUnlocked = false;
+function gateRoute() {
+  if (routeUnlocked) { switchTab('route'); return; }
+  const modal = document.getElementById('pw-modal');
+  modal.style.display = 'flex';
+  setTimeout(() => document.getElementById('pw-input').focus(), 50);
+}
+function closePwModal() {
+  document.getElementById('pw-modal').style.display = 'none';
+  document.getElementById('pw-input').value = '';
+  document.getElementById('pw-error').textContent = '';
+}
+function checkPw() {
+  const val = document.getElementById('pw-input').value;
+  if (val === 'manifest2025') {
+    routeUnlocked = true;
+    closePwModal();
+    switchTab('route');
+  } else {
+    document.getElementById('pw-error').textContent = 'Incorrect password. Try again.';
+    document.getElementById('pw-input').value = '';
+    document.getElementById('pw-input').focus();
+  }
+}
+
+/* ── Tabs ───────────────────────────────────────────────────────────── */
+let activeTab = 'pods';
+function switchTab(tab) {
+  activeTab = tab;
+  document.getElementById('pods-view').style.display  = tab === 'pods'  ? '' : 'none';
+  document.getElementById('route-view').style.display = tab === 'route' ? '' : 'none';
+  document.getElementById('tab-pods').classList.toggle('active', tab === 'pods');
+  document.getElementById('tab-route').classList.toggle('active', tab === 'route');
+  if (tab === 'route') { renderTrack(); renderStep(); }
+}
+
+/* ── Filter state ───────────────────────────────────────────────────── */
+const F = { open:false, visas:[], languages:[], industries:[] };
+function _tog(arr, v) { const i=arr.indexOf(v); if(i>-1) arr.splice(i,1); else arr.push(v); }
+function togVisa(v) { _tog(F.visas,v);      renderCards(); }
+function togLang(l) { _tog(F.languages,l);  renderCards(); }
+function togInd(i)  { _tog(F.industries,i); renderCards(); }
+function togPanel() { F.open=!F.open;        renderCards(); }
+function clearF()   { F.visas=[]; F.languages=[]; F.industries=[]; renderCards(); }
+
+/* ── Flip card toggle ───────────────────────────────────────────────── */
+function toggleFlip(slug) {
+  const el = document.querySelector('.flip-card[data-slug="' + slug + '"]');
+  if (el) el.classList.toggle('flipped');
+}
+
+/* ── Render cards (B2B Pods tab) ────────────────────────────────────── */
+function renderCards() {
+  // Drive entirely from POD_CAPACITY keys — the sheet is the source of truth.
+  // If a pod is added/removed from the sheet it appears/disappears here automatically.
+  const podSlugs = Object.keys(POD_CAPACITY);
+
+  let cards = [];
+  for (const slug of podSlugs) {
+    const cap   = POD_CAPACITY[slug];
+    const leads = ALL_ATTORNEYS.filter(a => a.podSlug === slug && (a.tags||[]).includes('Practice Lead'));
+    if (!leads.length) continue;
+
+    let lead;
+    if (slug === 'nadia-lucia') {
+      const N = leads.find(a => a.email === 'n.zaidi@manifestlaw.com') || leads[0];
+      const L = leads.find(a => a.email === 'l.maxwell@manifestlaw.com') || leads[1] || leads[0];
+      lead = {
+        ...N,
+        name:       'Nadia Zaidi & Lucia Maxwell',
+        podName:    cap.podName || "Nadia & Lucia's Pod",
+        link:       L.link || N.link,
+        doNotSend:  N.doNotSend || L.doNotSend,
+        scores:     mergeScores(N.scores||{}, L.scores||{}),
+        languages:  uniq([...(N.languages||[]),...(L.languages||[])]),
+        industries: [...new Set([...(N.industries||[]),...(L.industries||[])])],
+      };
+    } else {
+      lead = { ...leads[0], podName: cap.podName || leads[0].name + "'s Pod" };
+    }
+    cards.push({ lead, cap, slug });
+  }
+
+  // Apply filters
+  const active = F.visas.length + F.languages.length + F.industries.length;
+  cards = cards.filter(({ lead: a }) => {
+    const s = a.scores || {};
+    if (F.visas.length && !F.visas.every(v => (s[v]||0) >= 3)) return false;
+    if (F.languages.length && !F.languages.every(l => (a.languages||[]).includes(l))) return false;
+    if (F.industries.length) {
+      const ind = (a.industries||[]).map(i => shortLbl(i)).filter(Boolean);
+      if (!F.industries.every(i => ind.includes(i))) return false;
+    }
+    return true;
+  });
+
+  // Sort: available first, then alpha by pod name
+  cards.sort((a, b) => {
+    if (a.lead.doNotSend !== b.lead.doNotSend) return a.lead.doNotSend ? 1 : -1;
+    return (a.cap.podName||a.lead.name).localeCompare(b.cap.podName||b.lead.name);
+  });
+
+  // Filter options — from all leads across all pods
+  const allLeads = podSlugs.flatMap(s => ALL_ATTORNEYS.filter(a => a.podSlug===s && (a.tags||[]).includes('Practice Lead')));
+  const allLangs = uniq(allLeads.flatMap(a => a.languages||[]));
+  const allInds  = uniq(allLeads.flatMap(a => (a.industries||[]).map(i => shortLbl(i)).filter(Boolean)));
+
+  // Filter bar
+  document.getElementById('filter-bar').innerHTML = `
+    <div class="filter-bar-row">
+      <span class="filter-count">${cards.length} pod${cards.length!==1?'s':''}</span>
+      <button class="filter-toggle${F.open||active>0?' on':''}" onclick="togPanel()">
+        ${active>0 ? 'Filters <span class="filter-badge">'+active+'</span>' : 'Filters &#9660;'}
+      </button>
+    </div>
+    ${F.open ? `<div class="filter-panel">
+      ${allLangs.length ? `<div>
+        <div class="fp-title">Language</div>
+        <div class="pills">${allLangs.map(l=>`<button class="pill${F.languages.includes(l)?' on':''}" data-v="${esc(l)}" onclick="togLang(this.dataset.v)">${l}</button>`).join('')}</div>
+      </div>` : ''}
+      ${allInds.length ? `<div>
+        <div class="fp-title">Industry</div>
+        <div class="pills">${allInds.map(i=>`<button class="pill${F.industries.includes(i)?' on':''}" data-v="${esc(i)}" onclick="togInd(this.dataset.v)">${i}</button>`).join('')}</div>
+      </div>` : ''}
+      <div>
+        <div class="fp-title">Visa Types (score ≥ 3)</div>
+        ${Object.entries(VISA_GROUPS).map(([grp,vs])=>`
+          <div style="margin-bottom:14px">
+            <div class="visa-grp-lbl">${grp}</div>
+            <div class="pills">${vs.map(v=>`<button class="pill${F.visas.includes(v)?' on':''}" data-v="${esc(v)}" onclick="togVisa(this.dataset.v)">${v}</button>`).join('')}</div>
+          </div>`).join('')}
+      </div>
+      ${active>0?`<div style="display:flex;justify-content:flex-end"><button class="clear-btn" onclick="clearF()">Clear filters</button></div>`:''}
+    </div>` : ''}`;
+
+  // Cards
+  document.getElementById('cards-grid').innerHTML = cards.map(({ lead, cap, slug }) => buildCard(lead, cap, slug)).join('');
+}
+
+function buildCard(a, cap, slug) {
+  cap  = cap  || POD_CAPACITY[slug] || POD_CAPACITY[a.podSlug] || {};
+  slug = slug || a.podSlug || 'unknown';
+  const lbl     = cap.label || '';
+  const cls     = lbl.toLowerCase();
+  const pct     = Math.round((cap.utilization||0) * 100);
+  const barClr  = cls==='high' ? '#22c55e' : cls==='medium' ? '#f59e0b' : '#ef4444';
+
+  // Production attorneys come from the sheet via cap.productionAttorneys
+  const prodAttys = cap.productionAttorneys || [];
+
+  // ── Front ──
+  const isSeller = a.tags.includes('Seller');
+  const sCls = a.doNotSend ? 'red' : isSeller ? 'green' : 'gray';
+  const sLbl = a.doNotSend ? 'Unavailable' : 'Available';
+
+  const capFront = lbl ? `<span class="cap-badge ${cls}">${lbl}</span>` : '';
+
+  let cta;
+  if (a.doNotSend)              cta = `<span class="fc-cta off">Unavailable</span>`;
+  else if (isSeller && a.link)  cta = `<a class="fc-cta" href="${esc(a.link)}" target="_blank" rel="noopener" onclick="event.stopPropagation()">Book Consultation ↗</a>`;
+  else                          cta = `<span class="fc-cta off">No Booking Link</span>`;
+
+  const sizes = (a.clientSizes||[]).map(s=>`<span class="fc-size">${s}</span>`).join('');
+  const dns   = a.doNotSend ? `<p class="fc-dns">Temporarily unavailable for consultations</p>` : '';
+
+  let body = '';
+  const inds = (a.industries||[]).filter(i=>i&&i!=='Other:');
+  if (inds.length) {
+    const sh = inds.slice(0,3).map(i=>`<span class="fc-pill">${esc(shortLbl(i))}</span>`).join('');
+    const mr = inds.length>3 ? `<span class="fc-pill more">+${inds.length-3} more</span>` : '';
+    body += `<div><p class="fc-section-lbl">Industries</p><div class="fc-pills">${sh}${mr}</div></div>`;
+  }
+  if ((a.languages||[]).length) {
+    body += `<div><p class="fc-section-lbl">Languages</p><div class="fc-pills">${(a.languages||[]).map(l=>`<span class="fc-pill">${esc(l)}</span>`).join('')}</div></div>`;
+  }
+  if (a.yearsOfExperience) {
+    body += `<div style="font-size:13px;color:var(--muted)">⏱ <strong style="color:var(--text)">${esc(a.yearsOfExperience)}</strong> yrs experience</div>`;
+  }
+  if (a.scores) {
+    const strong = Object.entries(a.scores).filter(([,s])=>s>=4).map(([v])=>v);
+    if (strong.length) {
+      const sh = strong.slice(0,5), mr = strong.length-sh.length;
+      body += `<div><p class="fc-section-lbl">Strong Visa Types</p><div class="fc-pills">${sh.map(v=>`<span class="fc-pill strong">${v}</span>`).join('')}${mr>0?`<span class="fc-pill more">+${mr} more</span>`:''}</div></div>`;
+    }
+  }
+
+  const front = `
+    <div class="flip-face flip-front" onclick="toggleFlip('${esc(slug)}')">
+      <div class="fc-header">
+        <div class="fc-top">
+          <div>
+            <div class="fc-name">${esc(a.podName||a.name)}</div>
+            <div class="fc-sub">${esc(a.name)}</div>
+          </div>
+          <div class="fc-badges">
+            <span class="fc-status ${sCls}">${sLbl}</span>
+            ${capFront}
+          </div>
+        </div>
+        <p class="fc-email">${esc(a.email)}</p>
+        <p class="fc-type">${esc(a.tags.join(' · '))}</p>
+        ${sizes ? `<div class="fc-sizes">${sizes}</div>` : ''}
+        ${dns}${cta}
+      </div>
+      ${body ? `<div class="fc-body">${body}</div>` : ''}
+      <div class="fc-hint">Tap to see capacity →</div>
+    </div>`;
+
+  // ── Back ──
+  const prodHtml = prodAttys.length
+    ? prodAttys.map(name=>`<div class="fb-prod-item"><span class="fb-dot"></span>${esc(name)}</div>`).join('')
+    : `<div style="font-size:13px;color:rgba(255,255,255,.4);font-style:italic">None assigned</div>`;
+
+  const refreshLine = cap.lastRefreshed
+    ? `<div style="font-size:11px;color:rgba(255,255,255,.3);margin-top:auto;padding-top:12px">BQ updated ${fmtTs(cap.lastRefreshed)}</div>` : '';
+
+  const back = `
+    <div class="flip-face flip-back" onclick="toggleFlip('${esc(slug)}')">
+      <div class="fb-eyebrow">Pod Capacity</div>
+      <div style="font-family:var(--serif);font-size:18px;font-weight:bold;color:#fff;margin-bottom:10px;line-height:1.2">${esc(cap.podName||a.podName||a.name)}</div>
+      <div class="fb-pct-row">
+        <span class="fb-pct">${pct}%</span>
+        <span class="fb-word">utilized</span>
+      </div>
+      <div class="fb-track"><div class="fb-bar" style="width:${Math.min(pct,100)}%;background:${barClr}"></div></div>
+      ${lbl ? `<span class="fb-cap-inv ${cls}">${lbl} Capacity</span>` : ''}
+      <div class="fb-divider"></div>
+      <div class="fb-eyebrow">Production Attorneys</div>
+      ${prodHtml}
+      ${refreshLine}
+      <div class="fb-hint">← Tap to flip back</div>
+    </div>`;
+
+  return `<div class="flip-scene"><div class="flip-card" data-slug="${esc(slug)}">${front}${back}</div></div>`;
+}
+
+/* ── Wizard ─────────────────────────────────────────────────────────── */
+const S = { step:1, clientSize:null, visas:[], visaUnknown:false, date:null };
+const STEPS = ['Client','Visa','Date','Results'];
+
+function getMatches() {
+  return ATTORNEYS
+    .filter(a => {
+      if (a.doNotSend || !a.tags.includes('Seller')) return false;
+      if (S.clientSize && !(a.clientSizes||[]).includes(S.clientSize)) return false;
+      if (!S.visaUnknown && S.visas.length) return S.visas.every(v=>((a.scores||{})[v]||0)>=3);
+      return true;
+    })
+    .map(a => {
+      const sv = S.visaUnknown ? Object.values(a.scores||{}).filter(s=>s>=3) : S.visas.map(v=>(a.scores||{})[v]||0).filter(s=>s>=3);
+      return {...a, avg: sv.length ? sv.reduce((x,y)=>x+y,0)/sv.length : 0};
+    })
+    .sort((a,b)=>b.avg-a.avg);
+}
+
+function renderTrack() {
+  const t = document.getElementById('track');
+  if (!t) return;
+  t.innerHTML = STEPS.map((lbl,i)=>{
+    const n=i+1, c=n<S.step?'done':n===S.step?'active':'';
+    const line = i<STEPS.length-1 ? `<div class="track-line${n<S.step?' done':''}"></div>` : '';
+    return `<div class="track-dot ${c}" style="position:relative">${n<S.step?'✓':n}<span class="track-label">${lbl}</span></div>${line}`;
+  }).join('');
+}
+
+function renderStep() {
+  const c = document.getElementById('step-content');
+  if (!c) return;
+  if      (S.step===1) c.innerHTML = step1();
+  else if (S.step===2) c.innerHTML = step2();
+  else if (S.step===3) c.innerHTML = step3();
+  else                 c.innerHTML = step4();
+  bindWizard();
+}
+
+function step1() {
+  return `<div class="step">
+    <div class="step-eyebrow">Step 1 of 4</div>
+    <h1 class="step-title">What is the client's company size?</h1>
+    <p class="step-sub">Filters attorneys configured for that client tier.</p>
+    <div class="size-grid">
+      ${['Micro SMB','SMB','Mid-Market','Enterprise'].map(s=>`
+        <button class="size-btn${S.clientSize===s?' on':''}" data-s="${s}">
+          <span class="size-name">${s}</span>
+          <span class="size-desc">${CLIENT_SIZE_DESC[s]}</span>
+        </button>`).join('')}
+    </div>
+    <div class="nav"><span></span>
+      <button class="btn btn-primary" id="n1" ${!S.clientSize?'disabled':''}>Continue →</button>
+    </div></div>`;
+}
+
+function step2() {
+  const cnt = S.visas.length;
+  return `<div class="step">
+    <div class="step-eyebrow">Step 2 of 4</div>
+    <h1 class="step-title">What visa types does this client need?</h1>
+    <p class="step-sub">Attorneys must score 3 or above on every type selected.</p>
+    <button class="visa-unknown-btn${S.visaUnknown?' on':''}" id="vunk">
+      <span class="vub-icon">?</span>
+      <span><span class="vub-title">Unknown or not sure yet</span><span class="vub-desc">Show all available attorneys for this client tier</span></span>
+    </button>
+    <div class="visa-pills-wrap" style="${S.visaUnknown?'opacity:.35;pointer-events:none':''}">
+      ${Object.entries(VISA_GROUPS).map(([g,vs])=>`
+        <div><div class="visa-grp-lbl">${g}</div>
+        <div class="vpills">${vs.map(v=>`<button class="vpill${S.visas.includes(v)?' on':''}" data-v="${esc(v)}">${v}</button>`).join('')}</div></div>`).join('')}
+    </div>
+    ${!S.visaUnknown&&cnt>0?`<p class="sel-count"><strong>${cnt} visa type${cnt>1?'s':''}</strong> selected</p>`:''}
+    <div class="nav">
+      <button class="btn btn-ghost" id="b2">← Back</button>
+      <button class="btn btn-primary" id="n2" ${(!S.visaUnknown&&cnt===0)?'disabled':''}>Continue →</button>
+    </div></div>`;
+}
+
+function step3() {
+  const today = new Date().toISOString().split('T')[0];
+  return `<div class="step">
+    <div class="step-eyebrow">Step 3 of 4</div>
+    <h1 class="step-title">When should the consultation happen?</h1>
+    <p class="step-sub">Optional — added to assignment notes.</p>
+    <input class="date-input" type="date" id="dp" min="${today}" value="${S.date||''}">
+    <div class="nav">
+      <button class="btn btn-ghost" id="b3">← Back</button>
+      <div class="nav-r">
+        <button class="btn btn-text" id="sk3">Skip →</button>
+        <button class="btn btn-primary" id="n3" ${!S.date?'disabled':''}>See Results →</button>
+      </div>
+    </div></div>`;
+}
+
+function step4() {
+  const matches = getMatches();
+  const chips = [
+    S.clientSize&&`<span class="meta-chip">${S.clientSize}</span>`,
+    S.visaUnknown&&`<span class="meta-chip">Visa TBD</span>`,
+    ...S.visas.map(v=>`<span class="meta-chip">${v}</span>`),
+    S.date&&`<span class="meta-chip">${fmtDate(S.date)}</span>`,
+  ].filter(Boolean).join('');
+  const cards = matches.length===0
+    ? `<div class="no-results"><div class="no-results-icon">🔍</div><h3>No attorneys matched.</h3><p>Try a different size or fewer visa types.</p></div>`
+    : matches.map((a,i)=>resultCard(a,i)).join('');
+  return `<div class="step">
+    <div class="step-eyebrow">Step 4 of 4</div>
+    <h1 class="step-title">Matched attorneys</h1>
+    <div class="results-meta">${chips}</div>
+    <div class="results-list">${cards}</div>
+    <div class="footer-actions">
+      <button class="btn btn-ghost" id="b4">← Adjust</button>
+      <button class="btn btn-text" id="rs">Start over</button>
+    </div></div>`;
+}
+
+function resultCard(a, rank) {
+  const pct = Math.round((a.avg/5)*100);
+  const bc  = pct===100?'perfect':pct>=80?'strong':'neutral';
+  const tags = (a.tags||[]).map(t=>`<span class="tag${t==='Seller'?' seller':t.includes('Lead')?' lead':''}">${t}</span>`).join('');
+  let vp = '';
+  if (!S.visaUnknown && S.visas.length) {
+    vp = `<div class="match-pills">${S.visas.map(v=>{const s=(a.scores||{})[v]||0; return `<span class="match-pill ${s>=4?'pref':'neutral'}">${v} · ${s>=4?'Preferred':'Capable'}</span>`;}).join('')}</div>`;
+  }
+  const book = a.link&&a.link!=='N/A'
+    ? `<a class="btn-book" href="${esc(a.link)}" target="_blank" rel="noopener">Book ↗</a>`
+    : `<span class="btn-book-off">No booking link</span>`;
+  return `<div class="atty-card">
+    <div class="score-bar ${bc}"></div>
+    <div class="atty-body">
+      <div class="atty-rank">${rank+1}</div>
+      <div class="atty-top">
+        <div><div class="atty-name">${esc(a.name)}</div><div class="tag-row">${tags}</div></div>
+        <div class="score-display"><div class="score-num">${pct}%</div><div class="score-lbl">match</div></div>
+      </div>
+      ${vp}${book}
+    </div></div>`;
+}
+
+function fmtDate(s) {
+  const [y,m,d]=s.split('-');
+  return new Date(+y,+m-1,+d).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+}
+
+function bindWizard() {
+  document.querySelectorAll('.size-btn').forEach(btn => {
+    btn.addEventListener('click', ()=>{ S.clientSize=btn.dataset.s; renderStep(); });
+  });
+  gel('n1', ()=>{ S.step=2; renderTrack(); renderStep(); });
+
+  gel('vunk', ()=>{ S.visaUnknown=!S.visaUnknown; if(S.visaUnknown)S.visas=[]; renderStep(); });
+  document.querySelectorAll('.vpill').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      const v=btn.dataset.v; if(!v) return;
+      const i=S.visas.indexOf(v); if(i>-1) S.visas.splice(i,1); else S.visas.push(v);
+      renderStep();
+    });
+  });
+  gel('b2', ()=>{ S.step=1; renderTrack(); renderStep(); });
+  gel('n2', ()=>{ S.step=3; renderTrack(); renderStep(); });
+
+  gel('b3', ()=>{ S.step=2; renderTrack(); renderStep(); });
+  gel('sk3',()=>{ S.date=null; S.step=4; renderTrack(); renderStep(); });
+  gel('n3', ()=>{ S.step=4; renderTrack(); renderStep(); });
+  const dp=document.getElementById('dp');
+  if(dp) dp.addEventListener('change',()=>{ S.date=dp.value||null; renderStep(); });
+
+  gel('b4', ()=>{ S.step=3; renderTrack(); renderStep(); });
+  gel('rs', ()=>{ S.step=1; S.clientSize=null; S.visas=[]; S.visaUnknown=false; S.date=null; renderTrack(); renderStep(); });
+}
+
+function gel(id, fn) { const e=document.getElementById(id); if(e) e.addEventListener('click',fn); }
+
+/* ── Init ───────────────────────────────────────────────────────────── */
+async function init() {
+  await loadSheet();
+  renderCards();
+}
+init();
+</script>

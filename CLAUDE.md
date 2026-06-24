@@ -1,162 +1,219 @@
 # B2B Attorney Hub — Claude Code Brief
 
 ## Goal
-Duplicate the existing B2C attorney directory (`v0-attorney-profile-database`) into a new B2B version. **Do not modify the original repo.**
+A B2B internal tool for the Manifest Law **sales team** to route and schedule consultations with the right attorney for B2B clients. **Do not modify the B2C repo** (`v0-attorney-profile-database`).
 
 ---
 
-## Existing B2C Repo
-- GitHub: `https://github.com/manifestlaw-labs/v0-attorney-profile-database` (private, under `manifestlaw-labs` org)
-- Live URL: `https://v0-attorney-profile-database.manifestlabs.dev`
-- v0 project: `https://v0.app/chat/projects/prj_WlHwcbPMBGetparLL60jHxcwH4It`
+## Architecture (current)
 
-## New B2B Repo Target
-- GitHub repo name: `v0-b2b-attorney-hub` (create new private repo under `manifestlaw-labs`)
-- Suggested URL: `https://v0-b2b-attorney-hub.manifestlabs.dev`
+The tool is a **standalone HTML page** backed by a **Google Apps Script web app**. The Google Sheet is the single source of truth for attorney data.
 
----
-
-## Tech Stack
-- **Framework:** Next.js 16 App Router (TypeScript)
-- **Database:** Supabase REST API (raw fetch, no SDK) — schema: `attorney_consultation`, table: `attorney_profile`
-- **Availability:** Google Sheets (public CSV via `gviz/tq`) — 30-min in-memory cache
-- **Scheduling:** Cal.com private links via ManifestOS API (`MANIFEST_API_URL/api/calcom/v1/private-links`)
-- **Data fetching:** SWR
-- **UI:** shadcn/ui + Tailwind 4 + Radix
-- **Auth gate:** Simple sessionStorage passcode (`manifest2025`)
-- **Deployment:** Vercel (auto-deploy on merge to main via v0)
-
----
-
-## Key File Structure
 ```
-app/
-  page.tsx                  # Renders <AttorneyDirectory />
-  layout.tsx                # Title, fonts, metadata
-  globals.css
-  actions/
-    refresh-availability.ts # Server action: busts Google Sheets cache
-    update-attorney.ts      # Server action: PATCH attorney record
-  attorney/new/             # Add new attorney form
-  profile/                  # Attorney profile/edit page
-
-lib/
-  types.ts                  # Attorney interface + CaseHighlight
-  constants.ts              # VISA_GROUPS, INDUSTRIES, CASE_STRENGTHS, etc.
-  supabase.ts               # fetchAttorneys(), fetchAttorneyById(), updateAttorney(), createAttorney()
-  google-sheets.ts          # Fetches availability CSV, 30-min cache, bustAvailabilityCache()
-  utils.ts                  # cn() helper
-  actions/
-    private-links.ts        # generatePrivateLink() server action
-
-components/
-  attorney-directory.tsx    # Main directory UI, SWR fetch, cards, filters, summary tab
-  search-filters.tsx        # Filter panel (status, availability, visa, industry, strength, language)
-  profile-editor.tsx        # Attorney edit form
-  summary-tab.tsx           # Consult slots table by status color
-  passcode-gate.tsx         # Passcode wall (sessionStorage)
-  manifest-logo.tsx         # SVG logo
-  ui/                       # Full shadcn/ui component set
+Google Sheet (source of truth)
+    ↓  Apps Script doGet()
+HTML Tool (consultation routing + directory)
+    ↓  Apps Script doPost()
+Assignment Log tab (Google Sheet)
 ```
 
+**No Supabase.** **No Cal.com.** The Next.js repo exists but is not the active routing tool — the HTML prototype is.
+
 ---
 
-## Attorney Data Schema (`lib/types.ts`)
-```typescript
-interface Attorney {
-  id: string
-  name: string
-  bio: string | null
-  do_not_send: boolean
-  do_not_send_reason: string | null
-  is_available: boolean
-  employment_type: string | null        // "PT CC", "W2", "EXCLUSIVE CC", "CONSULT CC"
-  primary_visas: string[]
-  secondary_visas: string[]
-  industries: string[]
-  languages: string[]
-  case_strengths: string[]              // "Strong" | "Medium" | "Weak"
-  case_capabilities: string[]           // "RFEs", "NOIDs", "Rush Cases", etc.
-  case_highlights: CaseHighlight[]
-  conversion_rate: number | null
-  cal_slug: string | null
-  scheduling_link: string | null
-  scheduling_links: Record<string, string>
-  years_of_experience: string | null
-  num_cases: number | null
-  approval_rate: string | null
-  google_summary: string | null
-  testimonial_excerpts: string[]
-  email: string | null
-  earliest_availability: string | null
-  availability_status: string | null    // drives GREEN/YELLOW/ORANGE/RED badge
-  consult_slots_this_week: number | null
-  consult_slots_next_week: number | null
-  consult_slots_following_week: number | null
+## Repos & URLs
+
+| What | Where |
+|---|---|
+| B2B GitHub repo | `github.com/manifestlaw-labs/v0-b2b-attorney-hub` (private) |
+| B2C repo (read-only reference) | `github.com/manifestlaw-labs/v0-attorney-profile-database` |
+| Google Sheet (source of truth) | `https://docs.google.com/spreadsheets/d/1bEPvJ-B5qCL170Q8Gt0TtZmIRQIldmfBVtmD1qLy-A4` |
+| **Live dashboard (Claude artifact)** | `https://claude.ai/code/artifact/2d04803d-4be4-4156-a474-14b94701c00f` |
+| **Static snapshot (shareable)** | `https://claude.ai/code/artifact/22ae3fbc-b870-47b9-b362-efee10d85b06` |
+| **Apps Script (committed)** | `AttorneyDataEndpoint.gs` in repo root |
+| **HTML dashboard (committed)** | `dashboard.html` in repo root |
+
+---
+
+## Live Configuration
+
+**Apps Script URL (deployed, public):**
+```
+https://script.google.com/macros/s/AKfycbx5CWOVy2RXr9WkHe-U-OkA5J2ajdxKqQZknyli8kO8fgxOiN0kbLFfruw1RVdJUcMz/exec
+```
+- Deployed as: Web App · Execute as: Me · **Who has access: Anyone** (not domain-restricted)
+- The domain-scoped URL format (`/a/macros/manifestlaws.com/...`) causes CORS failures — always use the public format (`/macros/s/.../exec`)
+- BigQuery Advanced Service must be enabled in Apps Script editor (Services → BigQuery API)
+
+**Route Consultation password:** `manifest2025`
+
+---
+
+## Deliverables
+
+### 1. `AttorneyDataEndpoint.gs` — Apps Script backend
+Canonical copy: repo root. Paste into Google Sheet → Extensions → Apps Script.
+
+**`doGet()`** — returns JSON:
+```json
+{
+  "attorneys": [ ...attorney objects... ],
+  "podCapacity": { "pod-slug": { "podName", "utilization", "label", "lastRefreshed", "productionAttorneys" } },
+  "updated": "ISO timestamp"
 }
 ```
 
----
+Each attorney object includes: `name, email, podSlug, slug, clientSizes, tags, doNotSend, link, scores, languages, industries, yearsOfExperience, isPracticeLead, tier, maxLoad, weightedLoad`
 
-## Environment Variables (`.env.example`)
-```
-NEXT_PUBLIC_SUPABASE_URL=https://<project-ref>.supabase.co/rest/v1
-NEXT_PUBLIC_SUPABASE_ANON_KEY=<anon-key>
-SUPABASE_SERVICE_ROLE_KEY=<service-role-key>
-MANIFEST_API_URL=https://api-v2.manifestlaw.com
-MANIFEST_API_KEY=<bearer-token>
-```
+**`doPost()`** — appends a row to the Assignment Log tab.
 
----
+**`refreshFromBQ()`** — pulls active case counts from BigQuery (`manifestlaw-prod`), calculates weighted loads (visa_count × visa_weight), writes `weighted_load` to Attorney Capacity tab. Pod Capacity formulas recalculate automatically. Run via daily 6 AM trigger (`createBQRefreshTrigger()`) or on demand via `?action=refreshBQ`.
 
-## Changes Needed for B2B
+**Key Apps Script functions:**
+- `splitOutsideParens(str)` — splits comma-separated industry strings without breaking on commas inside parentheses (e.g. `"Tech (e.g., engineers, founders)"` stays as one item)
+- `readPodCapacity()` — filters out non-slug rows (e.g. `⚙ = auto-computed...` comment rows) using `/^[a-z0-9-]+$/.test(slug)`; cross-references Attorney Capacity tab to populate `productionAttorneys` per pod
+- `readAttorneys()` — reads Attorneys tab, handles Nadia & Lucia split via `NAME_MAP`
 
-### 1. Branding / Metadata (`app/layout.tsx`)
-```typescript
-// Change:
-title: 'Manifest Law — Attorney Hub'
-description: 'Internal attorney directory and profile management for Manifest Law'
+### 2. HTML Consultation Routing Tool (`dashboard.html`)
+Local copy committed at `dashboard.html` in the repo root.
 
-// To:
-title: 'Manifest Law — B2B Attorney Hub'
-description: 'Internal B2B attorney directory and profile management for Manifest Law'
-```
+**Tab structure:**
+- **B2B Pods** (default) — 5 practice lead flip cards with filter bar
+- **Route Consultation** — password-gated (`manifest2025`), 4-step wizard
 
-### 2. Supabase Table Name (`lib/supabase.ts`)
-The B2C version hardcodes `attorney_profile` as the table name in the `attorney_consultation` schema.
-Change every reference from `attorney_profile` to whatever the B2B table is named.
-**Ask Daniel what the B2B Supabase table name is before making this change.**
-As a fallback, use an env var: `process.env.SUPABASE_TABLE_NAME ?? 'b2b_attorney_profile'`
+**Flip card behavior:**
+- Drives from `Object.keys(POD_CAPACITY)` — adding/removing pods from sheet automatically adds/removes cards
+- Nadia Zaidi & Lucia Maxwell merged into one card
+- Front: attorney info, booking link, industries, languages, strong visa types
+- Back: pod name, utilization %, High/Medium/Low badge, production attorney names, last BQ refresh
+- "Tap to see capacity →" hint is `position: sticky; bottom: 0` — always visible
+- Filter bar: language, industry, visa type filters
 
-### 3. Google Sheets URL (`lib/google-sheets.ts`)
-The B2C version has a hardcoded Google Sheets URL for availability data.
-**Ask Daniel if there's a separate Google Sheet for B2B availability, or if B2B attorneys won't use Google Sheets at all.**
-If no separate sheet, you can disable the Google Sheets merge entirely and rely solely on Supabase data.
+**Password gate:** clicking Route Consultation shows a modal; password `manifest2025` unlocks for the session.
 
-### 4. `.env.example`
-Add: `SUPABASE_TABLE_NAME=b2b_attorney_profile`
+**BQ Refresh button:** fetches `APPS_SCRIPT_URL?action=refreshBQ`, runs full BQ query → updates weighted_load → re-renders cards with fresh capacity data.
 
-### 5. Everything else stays the same
-- Same Attorney schema/types
-- Same UI components
-- Same filter panel
-- Same Summary tab
-- Same passcode (`manifest2025`) — or ask Daniel if B2B needs a different one
+**Fallback data:** hardcoded in HTML, used automatically when fetch fails. Mirrors live sheet data as of 2026-06-24.
 
 ---
 
-## Deployment Steps (after code is ready)
-1. Create new private GitHub repo `v0-b2b-attorney-hub` under `manifestlaw-labs` org
-2. Push the B2B codebase to it
-3. Go to `v0.app` → New Project → Import from GitHub → select `v0-b2b-attorney-hub`
-4. Set env vars in Vercel (same Supabase project, different table)
-5. Set custom domain `v0-b2b-attorney-hub.manifestlabs.dev`
+## Google Sheet Structure
+
+**URL:** `https://docs.google.com/spreadsheets/d/1bEPvJ-B5qCL170Q8Gt0TtZmIRQIldmfBVtmD1qLy-A4`
+
+| Tab | Purpose | Read/Write |
+|---|---|---|
+| Attorneys | Attorney profiles + visa scores (1–5) | Read |
+| Legend | Score meanings + tag descriptions | Reference only |
+| Attorney Capacity | email → pod_slug map, tier, max_load, weighted_load, is_practice_lead | Read + BQ writes weighted_load |
+| Pod Capacity | pod_slug → pod_name, utilization, capacity_label, last_refreshed | Read + BQ writes last_refreshed |
+| Visa Weights | visa_type → weight (for BQ weighted load calc) | Reference only |
+| Assignment Log | One row per completed routing | Append via doPost |
+
+### Attorneys tab structure
+- Row 1: Section label headers (spans cols)
+- Row 2: Column headers (`name`, `slug`, `email`, `client_sizes`, `scheduling_link`, `do_not_send`, `tags`, `Languages`, `Industries`, `Year of Experience`, then 30 visa columns H–AK)
+- Row 3+: Attorney data (9 attorneys as of 2026-06-24)
+
+### Visa scoring scale
+| Score | Meaning | Effect on routing |
+|---|---|---|
+| 5 | Expert — always preferred | Included |
+| 4 | Strong — preferred | Included |
+| 3 | Capable — neutral | Included (min threshold) |
+| 2 | Limited | Excluded |
+| 1 | No experience | Excluded |
+| 0 | Not answered | Excluded |
 
 ---
 
-## Outstanding Questions for Daniel
-1. **What is the B2B Supabase table name?** (already created, or needs to be created?)
-2. **Is there a Google Sheet for B2B availability?** (or manual/no availability sync?)
-3. **What subdomain should the B2B hub live at?**
-4. **Does the B2B version need a different passcode?**
-5. **Any field/filter differences?** (Daniel said "same fields, maybe a few small tweaks" — confirm what those are)
+## Attorneys (as of 2026-06-24)
+
+| Name | Slug | Pod | Client Sizes | Tags | do_not_send |
+|---|---|---|---|---|---|
+| Nadia & Lucia | nadia-lucia | nadia-lucia | SMB, Mid-Market, Enterprise | Seller, Practice Lead | **TRUE** |
+| Matt Dillinger | matt-dillinger | matt-dillinger | SMB, Mid-Market, Enterprise | Seller, Practice Lead | false |
+| Nandini Nair | nandini-nair | nandini-nair | SMB, Mid-Market | Seller, Practice Lead | false |
+| David Santiago | david-santiago | kyle-mclaughlin | Micro SMB, SMB | Seller, Production Attorney | false |
+| Kyle McLaughlin | kyle-mclaughlin | kyle-mclaughlin | SMB, Mid-Market | Seller, Practice Lead | false |
+| Arielle Sheinfeld | arielle-sheinfeld | arielle-sheinfeld | Micro SMB, SMB, Mid-Market | Seller, Practice Lead | false |
+| Mayra Faz | mayra-faz | **nandini-nair** | Micro SMB, SMB | Production Attorney | false |
+| Cheryl Kilborn | cheryl-kilborn | matt-dillinger | Micro SMB, SMB | Production Attorney | false |
+| Blake Burch | blake-burch | matt-dillinger | Micro SMB, SMB | Production Attorney | false |
+| Ana Louzada | — (Attorney Capacity only) | kyle-mclaughlin | Micro SMB, SMB | Production Attorney | false |
+
+**Notes:**
+- Nadia & Lucia: one sheet row, `&`-separated emails; Apps Script splits into two attorney objects. `do_not_send: true` — excluded from routing but shown in directory.
+- Ana Louzada: in Attorney Capacity tab but NOT in Attorneys tab. Shows in pod card back via `readPodCapacity()` cross-reference.
+- Mayra Faz is in Nandini's pod (not Matt's) per the Attorney Capacity tab.
+
+---
+
+## Consultation Routing Logic
+
+Routing wizard shows only **Sellers** (`tags.includes('Seller')`) who are **not** `do_not_send`.
+
+**Step 1 — Client Size:** filter `a.clientSizes.includes(selectedSize)`
+
+**Step 2 — Visa Types:**
+- Known visas: attorney must score **≥ 3** on every selected visa
+- Unknown / TBD: show all available sellers for that client size (no visa filter)
+
+**Step 3 — Date:** optional, captured for notes only (no availability check)
+
+**Step 4 — Results:** sorted by average visa score across selected visas (highest first)
+
+---
+
+## Pod Capacity (as of 2026-06-24 BQ refresh)
+
+| Pod | Utilization | Label | Production Attorneys |
+|---|---|---|---|
+| Matt Dillinger's Pod | 25% | High | Cheryl Kilborn, Blake Burch |
+| Nandini Nair's Pod | 7% | High | Mayra Faz |
+| Kyle McLaughlin's Pod | 91% | Low | David Santiago, Ana Louzada |
+| Arielle Sheinfeld's Pod | 93% | Low | — |
+| Nadia & Lucia's Pod | 70% | Medium | — |
+
+---
+
+## Key Decisions Made
+
+1. **Google Sheet is the source of truth** — not Supabase, not Next.js.
+2. **Cal.com eliminated from routing** — no OOO check. Date field is for notes only.
+3. **Standalone HTML tool, not Next.js** — simpler to deploy, no infra dependency.
+4. **Seller tag drives routing eligibility** — Nadia & Lucia have `do_not_send: true` but are shown in directory.
+5. **do_not_send = excluded from wizard, shown in directory** — intentional.
+6. **Visa score threshold = 3** — "Capable or better" on all selected visas.
+7. **BQ for capacity data** — weighted load = SUM(case_count × visa_weight) per attorney.
+8. **Public Apps Script deployment** — "Anyone" access (not org-restricted) required for CORS to work from localhost/artifact.
+9. **Dynamic pod cards** — driven from `Object.keys(POD_CAPACITY)`, not filtered attorney list. New pods appear automatically.
+10. **productionAttorneys in pod JSON** — sourced from Attorney Capacity tab cross-reference, not Attorneys tab. Handles attorneys (like Ana Louzada) who are in capacity but not the attorneys tab.
+
+---
+
+## Next Steps
+
+### Immediate
+- [x] Apps Script deployed (public, Anyone access)
+- [x] APPS_SCRIPT_URL set in dashboard.html
+- [x] Route Consultation tab enabled + password-gated
+- [x] BQ trigger enabled (run `createBQRefreshTrigger()` once — installs daily 6 AM refresh)
+- [ ] Wire up `doPost()` from HTML → log assignments to Assignment Log tab
+- [ ] Add AE name + company fields to routing results step (for the log)
+
+### Hosting
+- [ ] Decide: Google Sites embed, direct artifact share, or deploy to `v0-b2b-attorney-hub.manifestlabs.dev`
+- [ ] Vercel project creation (if Next.js hub still needed for attorney profile management)
+
+---
+
+## Reference: Production Assignment Script
+
+A separate, more complex Apps Script exists for the **Micro SMB production assignment tool**. Key differences from our tool:
+- Includes Cal.com OOO checking (our tool has none)
+- Handles both consult AND production attorney assignment
+- Has a Google Sheets form UI (ours is an HTML page)
+- Uses Attorney Preferences tab (ours uses raw scores)
+
+Do not confuse the two systems. Ours is consult-only, HTML-based, no Cal.com.

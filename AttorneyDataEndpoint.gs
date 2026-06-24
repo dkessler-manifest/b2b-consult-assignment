@@ -528,6 +528,7 @@ function createBQRefreshTrigger() {
 // Returns: { email: { accessible: bool, slots: { iso: bool }, nextAvailable: iso|null } }
 
 function checkAvailability(params) {
+  params = params || {};
   var emails = (params.emails || '').split(',').map(function(e){ return e.trim(); }).filter(Boolean);
   var slots  = (params.slots  || '').split(',').map(function(s){ return s.trim(); }).filter(Boolean);
   if (!emails.length || !slots.length) return {};

@@ -244,6 +244,30 @@ body { background: var(--ground); color: var(--text); font-family: var(--sans); 
 .footer-actions { margin-top:32px; padding-top:24px; border-top:1px solid var(--border); display:flex; justify-content:space-between; }
 .spinner { width:14px; height:14px; border:2px solid rgba(255,255,255,.3); border-top-color:#fff; border-radius:50%; animation:spin .7s linear infinite; flex-shrink:0; }
 @keyframes spin { to { transform:rotate(360deg); } }
+/* ── Time slot picker ── */
+.slot-chips { display:flex; flex-direction:column; gap:8px; margin-bottom:20px; }
+.slot-chip { display:flex; align-items:center; justify-content:space-between; padding:10px 16px; background:var(--surface); border:1.5px solid var(--border); border-radius:8px; font-size:13px; font-weight:500; }
+.slot-chip-label { display:flex; align-items:center; gap:8px; }
+.slot-chip-dot { width:8px; height:8px; border-radius:50%; background:var(--accent); flex-shrink:0; }
+.slot-chip-rm { background:none; border:none; cursor:pointer; color:var(--muted); font-size:20px; line-height:1; padding:0; margin-left:8px; transition:color .15s; }
+.slot-chip-rm:hover { color:var(--red); }
+.slot-add-lbl { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:1.2px; color:var(--muted); margin:0 0 10px; }
+.slot-max { font-size:13px; color:var(--muted); font-style:italic; padding:8px 0; }
+.time-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-top:14px; }
+.time-slot { padding:10px 6px; border:1.5px solid var(--border); border-radius:8px; background:#fff; cursor:pointer; font-size:13px; font-weight:500; text-align:center; transition:all .15s; font-family:var(--sans); }
+.time-slot:hover { border-color:var(--accent); color:var(--accent); }
+.time-slot.on { background:var(--accent); border-color:var(--accent); color:#fff; }
+/* ── Availability display ── */
+.avail-slots { display:flex; flex-wrap:wrap; gap:6px; margin-top:12px; }
+.avail-pill { font-size:11px; font-weight:600; padding:4px 10px; border-radius:100px; display:flex; align-items:center; gap:5px; }
+.avail-pill.free { background:var(--green-bg); color:var(--green); }
+.avail-pill.busy { background:var(--surface); color:var(--muted); border:1px solid var(--border); }
+.avail-pill::before { content:''; display:inline-block; width:6px; height:6px; border-radius:50%; background:currentColor; }
+.avail-next { margin-top:8px; font-size:12px; color:var(--muted); }
+.avail-next strong { color:var(--amber); }
+.avail-warn { margin-top:10px; font-size:12px; color:var(--amber); }
+.avail-loading { display:flex; align-items:center; gap:12px; padding:32px 0; color:var(--muted); font-size:14px; }
+.spinner-dark { width:16px; height:16px; border:2px solid var(--border); border-top-color:var(--accent); border-radius:50%; animation:spin .7s linear infinite; flex-shrink:0; }
 @media (max-width:600px) {
   .shell { padding:28px 16px 60px; }
   .cards-grid { grid-template-columns:1fr; }
@@ -661,8 +685,9 @@ function buildCard(a, cap, slug) {
 }
 
 /* ── Wizard ─────────────────────────────────────────────────────────── */
-const S = { step:1, clientSize:null, visas:[], visaUnknown:false, date:null };
-const STEPS = ['Client','Visa','Date','Results'];
+const S = { step:1, clientSize:null, visas:[], visaUnknown:false, slots:[], pickerDate:null, availability:null, availabilityLoading:false };
+const STEPS = ['Client','Visa','Time','Results'];
+let _availGen = 0;
 
 function getMatches() {
   return ATTORNEYS
@@ -695,7 +720,13 @@ function renderStep() {
   if      (S.step===1) c.innerHTML = step1();
   else if (S.step===2) c.innerHTML = step2();
   else if (S.step===3) c.innerHTML = step3();
-  else                 c.innerHTML = step4();
+  else {
+    c.innerHTML = step4();
+    if (S.slots.length && S.availability===null && !S.availabilityLoading) {
+      const m = getMatches();
+      if (m.length) checkAvailabilityForMatches(m);
+    }
+  }
   bindWizard();
 }
 
@@ -740,40 +771,101 @@ function step2() {
 
 function step3() {
   const today = new Date().toISOString().split('T')[0];
+  const date  = S.pickerDate || '';
+
+  const chips = S.slots.length ? `
+    <div class="slot-chips">
+      ${S.slots.map((s,i)=>`
+        <div class="slot-chip">
+          <span class="slot-chip-label"><span class="slot-chip-dot"></span>${esc(s.label)}</span>
+          <button class="slot-chip-rm" onclick="removeSlot(${i})">×</button>
+        </div>`).join('')}
+    </div>` : '';
+
+  const addSection = S.slots.length >= 3
+    ? `<p class="slot-max">Maximum of 3 time slots selected.</p>`
+    : `<div style="margin-bottom:24px">
+        <p class="slot-add-lbl">${S.slots.length ? 'Add another slot' : 'Choose a date'}</p>
+        <input class="date-input" type="date" id="slot-dp" min="${today}" value="${esc(date)}">
+        ${date ? `
+          <p class="slot-add-lbl" style="margin-top:18px">Select a time (11 AM – 5 PM ET)</p>
+          <div class="time-grid">
+            ${TIME_SLOTS.map(t=>{
+              const iso = slotToISO(date, t);
+              const on  = S.slots.some(s=>s.iso===iso);
+              return `<button class="time-slot${on?' on':''}" onclick="addSlot('${esc(date)}','${t}')">${fmtTimeStr(t)}</button>`;
+            }).join('')}
+          </div>` : `<p style="font-size:13px;color:var(--muted);margin-top:12px">Pick a date above to see available time slots.</p>`}
+      </div>`;
+
   return `<div class="step">
     <div class="step-eyebrow">Step 3 of 4</div>
-    <h1 class="step-title">When should the consultation happen?</h1>
-    <p class="step-sub">Optional — added to assignment notes.</p>
-    <input class="date-input" type="date" id="dp" min="${today}" value="${S.date||''}">
+    <h1 class="step-title">Select preferred time slots</h1>
+    <p class="step-sub">Pick up to 3 date + time combinations (30-min slots, 11 AM – 5 PM ET). Attorneys are filtered by real-time availability.</p>
+    ${chips}${addSection}
     <div class="nav">
       <button class="btn btn-ghost" id="b3">← Back</button>
       <div class="nav-r">
         <button class="btn btn-text" id="sk3">Skip →</button>
-        <button class="btn btn-primary" id="n3" ${!S.date?'disabled':''}>See Results →</button>
+        <button class="btn btn-primary" id="n3" ${!S.slots.length?'disabled':''}>See Results →</button>
       </div>
     </div></div>`;
 }
 
-function step4() {
-  const matches = getMatches();
-  const chips = [
-    S.clientSize&&`<span class="meta-chip">${S.clientSize}</span>`,
-    S.visaUnknown&&`<span class="meta-chip">Visa TBD</span>`,
+function buildResultChips() {
+  return [
+    S.clientSize && `<span class="meta-chip">${S.clientSize}</span>`,
+    S.visaUnknown && `<span class="meta-chip">Visa TBD</span>`,
     ...S.visas.map(v=>`<span class="meta-chip">${v}</span>`),
-    S.date&&`<span class="meta-chip">${fmtDate(S.date)}</span>`,
+    ...S.slots.map(s=>`<span class="meta-chip">🕐 ${esc(s.label)}</span>`),
   ].filter(Boolean).join('');
-  const cards = matches.length===0
+}
+
+function step4() {
+  const chips = buildResultChips();
+  const nav   = `<div class="footer-actions"><button class="btn btn-ghost" id="b4">← Adjust</button><button class="btn btn-text" id="rs">Start over</button></div>`;
+
+  // Still loading
+  if (S.availabilityLoading || (S.slots.length && S.availability===null)) {
+    return `<div class="step">
+      <div class="step-eyebrow">Step 4 of 4</div>
+      <h1 class="step-title">Checking availability…</h1>
+      <div class="results-meta">${chips}</div>
+      <div class="avail-loading"><div class="spinner-dark"></div>Checking attorney calendars in real time…</div>
+      ${nav}</div>`;
+  }
+
+  const matches = getMatches();
+  const avail   = S.availability || {};
+  let shown     = [];
+  let allBusy   = []; // matches with no free slots (shown only if shown is empty)
+
+  if (!S.slots.length) {
+    shown = matches; // no time filter
+  } else {
+    for (const a of matches) {
+      const av = avail[a.email];
+      if (!av || !av.accessible) {
+        shown.push({...a, _avail: av});
+      } else {
+        const hasFree = Object.values(av.slots||{}).some(Boolean);
+        if (hasFree) shown.push({...a, _avail: av});
+        else         allBusy.push({...a, _avail: av});
+      }
+    }
+    if (!shown.length && allBusy.length) shown = allBusy;
+  }
+
+  const cards = shown.length===0
     ? `<div class="no-results"><div class="no-results-icon">🔍</div><h3>No attorneys matched.</h3><p>Try a different size or fewer visa types.</p></div>`
-    : matches.map((a,i)=>resultCard(a,i)).join('');
+    : shown.map((a,i)=>resultCard(a,i)).join('');
+
   return `<div class="step">
     <div class="step-eyebrow">Step 4 of 4</div>
     <h1 class="step-title">Matched attorneys</h1>
     <div class="results-meta">${chips}</div>
     <div class="results-list">${cards}</div>
-    <div class="footer-actions">
-      <button class="btn btn-ghost" id="b4">← Adjust</button>
-      <button class="btn btn-text" id="rs">Start over</button>
-    </div></div>`;
+    ${nav}</div>`;
 }
 
 function resultCard(a, rank) {
@@ -784,6 +876,26 @@ function resultCard(a, rank) {
   if (!S.visaUnknown && S.visas.length) {
     vp = `<div class="match-pills">${S.visas.map(v=>{const s=(a.scores||{})[v]||0; return `<span class="match-pill ${s>=4?'pref':'neutral'}">${v} · ${s>=4?'Preferred':'Capable'}</span>`;}).join('')}</div>`;
   }
+
+  let availHtml = '';
+  if (S.slots.length) {
+    const av = a._avail;
+    if (!av || !av.accessible) {
+      availHtml = `<div class="avail-warn">⚠ Calendar not shared — confirm availability manually</div>`;
+    } else {
+      const hasFree = Object.values(av.slots||{}).some(Boolean);
+      const pills   = S.slots.map(slot=>{
+        const free = (av.slots||{})[slot.iso];
+        const lbl  = slot.label.split(' · ').slice(1).join(' · ') || slot.label;
+        return `<span class="avail-pill ${free?'free':'busy'}">${esc(lbl)}</span>`;
+      }).join('');
+      availHtml = `<div class="avail-slots">${pills}</div>`;
+      if (!hasFree && av.nextAvailable) {
+        availHtml += `<div class="avail-next">→ Next available: <strong>${esc(fmtSlotISO(av.nextAvailable))}</strong></div>`;
+      }
+    }
+  }
+
   const book = a.link&&a.link!=='N/A'
     ? `<a class="btn-book" href="${esc(a.link)}" target="_blank" rel="noopener">Book ↗</a>`
     : `<span class="btn-book-off">No booking link</span>`;
@@ -795,13 +907,74 @@ function resultCard(a, rank) {
         <div><div class="atty-name">${esc(a.name)}</div><div class="tag-row">${tags}</div></div>
         <div class="score-display"><div class="score-num">${pct}%</div><div class="score-lbl">match</div></div>
       </div>
-      ${vp}${book}
+      ${vp}${availHtml}${book}
     </div></div>`;
 }
 
 function fmtDate(s) {
   const [y,m,d]=s.split('-');
   return new Date(+y,+m-1,+d).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+}
+
+/* ── Slot helpers ───────────────────────────────────────────────────── */
+const TIME_SLOTS = ['11:00','11:30','12:00','12:30','13:00','13:30','14:00','14:30','15:00','15:30','16:00','16:30'];
+
+function slotToISO(dateStr, timeStr) {
+  const [y,m,d] = dateStr.split('-').map(Number);
+  const [h,min] = timeStr.split(':').map(Number);
+  let offset = -5;
+  try {
+    const probe = new Date(y, m-1, d, 12, 0, 0);
+    const parts = new Intl.DateTimeFormat('en-US',{timeZone:'America/New_York',timeZoneName:'shortOffset'}).formatToParts(probe);
+    const tz = (parts.find(p=>p.type==='timeZoneName')||{}).value||'';
+    offset = tz.includes('-4') ? -4 : -5;
+  } catch(_){}
+  return new Date(Date.UTC(y, m-1, d, h - offset, min)).toISOString();
+}
+
+function fmtSlotISO(iso) {
+  try {
+    const d = new Date(iso);
+    const day  = d.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric',timeZone:'America/New_York'});
+    const time = d.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit',hour12:true,timeZone:'America/New_York'});
+    return day + ' · ' + time + ' ET';
+  } catch(_){ return iso; }
+}
+
+function fmtTimeStr(t) {
+  const [h,m] = t.split(':').map(Number);
+  const ampm = h >= 12 ? 'PM' : 'AM';
+  const h12  = h > 12 ? h-12 : h===0 ? 12 : h;
+  return h12 + ':' + String(m).padStart(2,'0') + ' ' + ampm;
+}
+
+function removeSlot(i) { S.slots.splice(i,1); renderStep(); }
+
+function addSlot(dateStr, timeStr) {
+  const iso    = slotToISO(dateStr, timeStr);
+  const exists = S.slots.findIndex(s=>s.iso===iso);
+  if (exists > -1) { S.slots.splice(exists,1); }
+  else if (S.slots.length < 3) { S.slots.push({ iso, label: fmtSlotISO(iso) }); }
+  renderStep();
+}
+
+async function checkAvailabilityForMatches(matches) {
+  const gen = ++_availGen;
+  S.availabilityLoading = true;
+  const emails = matches.map(a=>a.email).join(',');
+  const slots  = S.slots.map(s=>s.iso).join(',');
+  try {
+    const url = APPS_SCRIPT_URL + '?action=checkAvailability' +
+      '&emails=' + encodeURIComponent(emails) +
+      '&slots='  + encodeURIComponent(slots);
+    const res  = await fetch(url);
+    if (!res.ok) throw new Error('HTTP '+res.status);
+    const data = await res.json();
+    if (gen === _availGen) { S.availability = data; S.availabilityLoading = false; renderStep(); }
+  } catch(e) {
+    console.error('Availability check failed:', e.message);
+    if (gen === _availGen) { S.availability = {}; S.availabilityLoading = false; renderStep(); }
+  }
 }
 
 function bindWizard() {
@@ -822,13 +995,13 @@ function bindWizard() {
   gel('n2', ()=>{ S.step=3; renderTrack(); renderStep(); });
 
   gel('b3', ()=>{ S.step=2; renderTrack(); renderStep(); });
-  gel('sk3',()=>{ S.date=null; S.step=4; renderTrack(); renderStep(); });
-  gel('n3', ()=>{ S.step=4; renderTrack(); renderStep(); });
-  const dp=document.getElementById('dp');
-  if(dp) dp.addEventListener('change',()=>{ S.date=dp.value||null; renderStep(); });
+  gel('sk3',()=>{ S.slots=[]; S.availability=null; S.availabilityLoading=false; S.step=4; renderTrack(); renderStep(); });
+  gel('n3', ()=>{ S.availability=null; S.availabilityLoading=false; S.step=4; renderTrack(); renderStep(); });
+  const dp=document.getElementById('slot-dp');
+  if(dp) dp.addEventListener('change',()=>{ S.pickerDate=dp.value||null; renderStep(); });
 
-  gel('b4', ()=>{ S.step=3; renderTrack(); renderStep(); });
-  gel('rs', ()=>{ S.step=1; S.clientSize=null; S.visas=[]; S.visaUnknown=false; S.date=null; renderTrack(); renderStep(); });
+  gel('b4', ()=>{ S.availability=null; S.availabilityLoading=false; ++_availGen; S.step=3; renderTrack(); renderStep(); });
+  gel('rs', ()=>{ S.step=1; S.clientSize=null; S.visas=[]; S.visaUnknown=false; S.slots=[]; S.pickerDate=null; S.availability=null; S.availabilityLoading=false; ++_availGen; renderTrack(); renderStep(); });
 }
 
 function gel(id, fn) { const e=document.getElementById(id); if(e) e.addEventListener('click',fn); }

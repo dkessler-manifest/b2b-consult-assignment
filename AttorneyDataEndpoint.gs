@@ -93,6 +93,13 @@ function readVisaWeights() {
 function doGet(e) {
   try {
     const params = (e && e.parameter) ? e.parameter : {};
+
+    if (params.action === 'checkAvailability') {
+      const result = checkAvailability(params);
+      return ContentService.createTextOutput(JSON.stringify(result))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+
     if (params.action === 'refreshBQ') {
       refreshFromBQ(true); // silent — no UI alert
     }
@@ -514,6 +521,98 @@ function createBQRefreshTrigger() {
     .atHour(6)
     .create();
   SpreadsheetApp.getUi().alert('Daily 6 AM refresh trigger installed.');
+}
+
+// ── Calendar Availability Check ──────────────────────────────────────────
+// Called via ?action=checkAvailability&emails=a@b.com,c@d.com&slots=iso1,iso2
+// Returns: { email: { accessible: bool, slots: { iso: bool }, nextAvailable: iso|null } }
+
+function checkAvailability(params) {
+  var emails = (params.emails || '').split(',').map(function(e){ return e.trim(); }).filter(Boolean);
+  var slots  = (params.slots  || '').split(',').map(function(s){ return s.trim(); }).filter(Boolean);
+  if (!emails.length || !slots.length) return {};
+
+  var SLOT_MS = 30 * 60 * 1000;
+  var result  = {};
+
+  for (var ei = 0; ei < emails.length; ei++) {
+    var email = emails[ei];
+    var entry = { accessible: true, slots: {}, nextAvailable: null };
+    try {
+      var cal = CalendarApp.getCalendarById(email);
+      if (!cal) { entry.accessible = false; result[email] = entry; continue; }
+
+      var allBusy = true;
+      for (var si = 0; si < slots.length; si++) {
+        var iso    = slots[si];
+        var start  = new Date(iso);
+        var end    = new Date(start.getTime() + SLOT_MS);
+        var events = cal.getEvents(start, end);
+        var free   = events.length === 0;
+        entry.slots[iso] = free;
+        if (free) allBusy = false;
+      }
+
+      if (allBusy) {
+        var slotDates = slots.map(function(s){ return new Date(s); }).sort(function(a,b){ return a-b; });
+        entry.nextAvailable = findNextAvailable(cal, slotDates[0]);
+      }
+    } catch(err) {
+      entry.accessible = false;
+      entry.error = err.message;
+    }
+    result[email] = entry;
+  }
+  return result;
+}
+
+function findNextAvailable(cal, startFrom) {
+  var SLOT_MS  = 30 * 60 * 1000;
+  var MAX_ITER = 600; // ~12.5 days of 30-min slots
+  var current  = new Date(startFrom.getTime() + SLOT_MS);
+
+  for (var i = 0; i < MAX_ITER; i++) {
+    var estHour = parseInt(Utilities.formatDate(current, 'America/New_York', 'H'), 10);
+    var estMin  = parseInt(Utilities.formatDate(current, 'America/New_York', 'm'), 10);
+    var dayStr  = Utilities.formatDate(current, 'America/New_York', 'yyyy-MM-dd');
+
+    if (estHour < 11) {
+      current = _makeETTime(dayStr, 11, 0);
+      continue;
+    }
+    if (estHour >= 17) {
+      var p = dayStr.split('-').map(Number);
+      var nextDay = new Date(Date.UTC(p[0], p[1]-1, p[2]+1));
+      var nextStr = Utilities.formatDate(nextDay, 'America/New_York', 'yyyy-MM-dd');
+      current = _makeETTime(nextStr, 11, 0);
+      continue;
+    }
+    if (estMin !== 0 && estMin !== 30) {
+      var alignMin = estMin < 30 ? 30 : 0;
+      var alignHr  = estMin < 30 ? estHour : estHour + 1;
+      if (alignHr >= 17) {
+        var p2 = dayStr.split('-').map(Number);
+        var nd = new Date(Date.UTC(p2[0], p2[1]-1, p2[2]+1));
+        current = _makeETTime(Utilities.formatDate(nd, 'America/New_York', 'yyyy-MM-dd'), 11, 0);
+      } else {
+        current = _makeETTime(dayStr, alignHr, alignMin);
+      }
+      continue;
+    }
+    var end    = new Date(current.getTime() + SLOT_MS);
+    var events = cal.getEvents(current, end);
+    if (events.length === 0) return current.toISOString();
+    current = new Date(current.getTime() + SLOT_MS);
+  }
+  return null;
+}
+
+function _makeETTime(etDateStr, hour, minute) {
+  var p = etDateStr.split('-').map(Number);
+  var tryEDT  = new Date(Date.UTC(p[0], p[1]-1, p[2], hour + 4, minute));
+  var checkH  = parseInt(Utilities.formatDate(tryEDT, 'America/New_York', 'H'), 10);
+  if (checkH === hour) return tryEDT;
+  return new Date(Date.UTC(p[0], p[1]-1, p[2], hour + 5, minute));
 }
 
 // ── Calendar Access Test ──────────────────────────────────────────────────

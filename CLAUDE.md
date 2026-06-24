@@ -28,8 +28,8 @@ Assignment Log tab (Google Sheet)
 | B2B GitHub repo | `github.com/manifestlaw-labs/v0-b2b-attorney-hub` (private) |
 | B2C repo (read-only reference) | `github.com/manifestlaw-labs/v0-attorney-profile-database` |
 | Google Sheet (source of truth) | `https://docs.google.com/spreadsheets/d/1bEPvJ-B5qCL170Q8Gt0TtZmIRQIldmfBVtmD1qLy-A4` |
-| **Live dashboard (Claude artifact)** | `https://claude.ai/code/artifact/2d04803d-4be4-4156-a474-14b94701c00f` |
-| **Static snapshot (shareable)** | `https://claude.ai/code/artifact/22ae3fbc-b870-47b9-b362-efee10d85b06` |
+| **Live site (GitHub Pages)** | `https://dkessler-manifest.github.io/b2b-consult-assignment/` |
+| **Mirror repo (personal)** | `github.com/dkessler-manifest/b2b-consult-assignment` (public) |
 | **Apps Script (committed)** | `AttorneyDataEndpoint.gs` in repo root |
 | **HTML dashboard (committed)** | `dashboard.html` in repo root |
 

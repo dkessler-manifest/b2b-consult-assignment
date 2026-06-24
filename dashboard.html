@@ -72,9 +72,9 @@ body { background: var(--ground); color: var(--text); font-family: var(--sans); 
   position: absolute; inset: 0;
   backface-visibility: hidden; -webkit-backface-visibility: hidden;
   border-radius: var(--radius); overflow: hidden; border: 1.5px solid var(--border);
-  clip-path: inset(0 round var(--radius));
 }
-.flip-front { background: #fff; display: flex; flex-direction: column; overflow-y: auto; }
+.flip-front { background: #fff; display: flex; flex-direction: column; overflow: hidden; }
+.fc-scroll-wrap { display: flex; flex-direction: column; flex: 1; overflow-y: auto; min-height: 0; }
 .flip-back {
   transform: rotateY(180deg);
   background: var(--accent); border-color: var(--accent); color: #fff;
@@ -649,24 +649,26 @@ function buildCard(a, cap, slug) {
 
   const front = `
     <div class="flip-face flip-front" onclick="toggleFlip('${esc(slug)}')">
-      <div class="fc-header">
-        <div class="fc-top">
-          <div>
-            <div class="fc-name">${esc(a.podName||a.name)}</div>
-            <div class="fc-sub">${esc(a.name)}</div>
+      <div class="fc-scroll-wrap">
+        <div class="fc-header">
+          <div class="fc-top">
+            <div>
+              <div class="fc-name">${esc(a.podName||a.name)}</div>
+              <div class="fc-sub">${esc(a.name)}</div>
+            </div>
+            <div class="fc-badges">
+              <span class="fc-status ${sCls}">${sLbl}</span>
+              ${capFront}
+            </div>
           </div>
-          <div class="fc-badges">
-            <span class="fc-status ${sCls}">${sLbl}</span>
-            ${capFront}
-          </div>
+          <p class="fc-email">${esc(a.email)}</p>
+          <p class="fc-type">${esc(a.tags.join(' · '))}</p>
+          ${sizes ? `<div class="fc-sizes">${sizes}</div>` : ''}
+          ${dns}${cta}
         </div>
-        <p class="fc-email">${esc(a.email)}</p>
-        <p class="fc-type">${esc(a.tags.join(' · '))}</p>
-        ${sizes ? `<div class="fc-sizes">${sizes}</div>` : ''}
-        ${dns}${cta}
+        ${body ? `<div class="fc-body">${body}</div>` : ''}
+        <div class="fc-hint">Tap to see capacity →</div>
       </div>
-      ${body ? `<div class="fc-body">${body}</div>` : ''}
-      <div class="fc-hint">Tap to see capacity →</div>
     </div>`;
 
   // ── Back ──

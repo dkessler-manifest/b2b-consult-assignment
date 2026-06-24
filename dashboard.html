@@ -62,28 +62,22 @@ body { background: var(--ground); color: var(--text); font-family: var(--sans); 
 .flip-scene { }
 .flip-card {
   position: relative; height: 440px;
-  perspective: 1100px;
-  cursor: pointer; user-select: none;
+  cursor: default; user-select: none;
 }
-
 .flip-face {
   position: absolute; inset: 0;
-  backface-visibility: hidden; -webkit-backface-visibility: hidden;
   border-radius: var(--radius); overflow: hidden; border: 1.5px solid var(--border);
-  transition: transform 0.55s cubic-bezier(0.45, 0.05, 0.25, 1);
 }
 .flip-front {
   background: #fff; display: flex; flex-direction: column; overflow: hidden;
-  transform: rotateY(0deg);
 }
-.flip-card.flipped .flip-front { transform: rotateY(-180deg); }
+.flip-front.cap-high   { background: #f0fdf4; border-color: #86efac; }
+.flip-front.cap-medium { background: #fffbeb; border-color: #fde68a; }
+.flip-front.cap-low    { background: #fff1f2; border-color: #fca5a5; }
+.cap-high  .fc-header  { background: #dcfce7; }
+.cap-medium .fc-header { background: #fef3c7; }
+.cap-low   .fc-header  { background: #fee2e2; }
 .fc-scroll-area { flex: 1; min-height: 0; overflow-y: auto; }
-.flip-back {
-  transform: rotateY(180deg);
-  background: var(--accent); border-color: var(--accent); color: #fff;
-  display: flex; flex-direction: column; padding: 24px 22px 18px;
-}
-.flip-card.flipped .flip-back { transform: rotateY(0deg); }
 
 /* Front face content */
 .fc-header { padding: 18px 20px 14px; border-bottom: 1px solid var(--border); }
@@ -112,7 +106,6 @@ body { background: var(--ground); color: var(--text); font-family: var(--sans); 
 .fc-pill { font-size: 11px; padding: 3px 9px; border-radius: 5px; border: 1px solid var(--border); color: var(--text); background: #fff; }
 .fc-pill.strong { background: var(--accent); color: #fff; border-color: var(--accent); }
 .fc-pill.more   { background: transparent; color: var(--muted); }
-.fc-hint { padding: 10px 20px 14px; font-size: 11px; color: var(--muted); text-align: center; border-top: 1px solid var(--surface); background: #fff; flex-shrink: 0; }
 
 /* Capacity badge (front face) */
 .cap-badge { padding: 3px 9px; border-radius: 100px; font-size: 11px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; border: 1.5px solid transparent; }
@@ -120,21 +113,60 @@ body { background: var(--ground); color: var(--text); font-family: var(--sans); 
 .cap-badge.medium { background: var(--amber-bg); color: var(--amber);  border-color: #fde68a; }
 .cap-badge.low    { background: var(--red-bg);   color: var(--red);    border-color: rgba(122,26,26,.2); }
 
-/* Back face content */
-.fb-eyebrow { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.2px; color: rgba(255,255,255,.45); margin-bottom: 10px; }
-.fb-pct-row { display: flex; align-items: baseline; gap: 7px; margin-bottom: 10px; }
-.fb-pct     { font-family: var(--serif); font-size: 52px; font-weight: bold; line-height: 1; color: #fff; }
-.fb-word    { font-size: 15px; color: rgba(255,255,255,.5); }
-.fb-track   { height: 6px; background: rgba(255,255,255,.15); border-radius: 100px; overflow: hidden; margin-bottom: 12px; }
-.fb-bar     { height: 100%; border-radius: 100px; }
-.fb-cap-inv { display: inline-block; padding: 3px 11px; border-radius: 100px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; }
-.fb-cap-inv.high   { background: rgba(34,197,94,.2);  color: #86efac; border: 1.5px solid rgba(34,197,94,.3); }
-.fb-cap-inv.medium { background: rgba(245,158,11,.2); color: #fde68a; border: 1.5px solid rgba(245,158,11,.3); }
-.fb-cap-inv.low    { background: rgba(239,68,68,.2);  color: #fca5a5; border: 1.5px solid rgba(239,68,68,.3); }
-.fb-divider { height: 1px; background: rgba(255,255,255,.15); margin: 16px 0; }
-.fb-prod-item { display: flex; align-items: center; gap: 8px; padding: 4px 0; font-size: 13px; color: rgba(255,255,255,.75); }
-.fb-dot { width: 5px; height: 5px; border-radius: 50%; background: rgba(255,255,255,.35); flex-shrink: 0; }
-.fb-hint { margin-top: auto; padding-top: 14px; font-size: 11px; color: rgba(255,255,255,.3); text-align: center; }
+/* ── Pod Detail Overlay ── */
+.pd-overlay { position:fixed; inset:0; background:rgba(0,0,0,.6); z-index:3000; display:flex; align-items:center; justify-content:center; padding:20px; }
+.pd-modal { position:relative; background:#fff; border-radius:16px; width:100%; max-width:860px; max-height:92vh; overflow:hidden; display:flex; flex-direction:column; box-shadow:0 32px 80px rgba(0,0,0,.3); animation:pdFlipIn .45s cubic-bezier(0.25,0.46,0.45,0.94); }
+@keyframes pdFlipIn { from { transform:perspective(1200px) rotateY(-90deg); opacity:0; } to { transform:perspective(1200px) rotateY(0deg); opacity:1; } }
+.pd-header { padding:24px 28px 20px; flex-shrink:0; color:#fff; }
+.pd-header-top { display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:14px; }
+.pd-close { background:rgba(255,255,255,.2); border:1.5px solid rgba(255,255,255,.35); border-radius:8px; color:#fff; cursor:pointer; font-size:20px; line-height:1; padding:5px 10px; transition:background .15s; font-family:var(--sans); }
+.pd-close:hover { background:rgba(255,255,255,.35); }
+.pd-pod-name { font-family:var(--serif); font-size:22px; font-weight:bold; color:#fff; line-height:1.2; margin-bottom:4px; }
+.pd-atty-name { font-size:13px; color:rgba(255,255,255,.7); }
+.pd-cap-row { display:flex; align-items:center; gap:14px; }
+.pd-pct-big { font-family:var(--serif); font-size:40px; font-weight:bold; color:#fff; line-height:1; }
+.pd-cap-meta { display:flex; flex-direction:column; gap:5px; }
+.pd-cap-lbl { font-size:11px; color:rgba(255,255,255,.6); font-weight:600; text-transform:uppercase; letter-spacing:.8px; }
+.pd-cap-badge-inv { display:inline-block; padding:3px 11px; border-radius:100px; font-size:11px; font-weight:700; text-transform:uppercase; background:rgba(255,255,255,.2); color:#fff; border:1.5px solid rgba(255,255,255,.35); }
+.pd-track { height:4px; background:rgba(255,255,255,.2); border-radius:100px; overflow:hidden; width:120px; }
+.pd-track-bar { height:100%; background:rgba(255,255,255,.75); border-radius:100px; }
+.pd-prod-row { margin-top:12px; display:flex; flex-wrap:wrap; gap:6px; }
+.pd-prod-chip { font-size:11px; padding:2px 10px; border-radius:100px; background:rgba(255,255,255,.15); border:1px solid rgba(255,255,255,.25); color:rgba(255,255,255,.9); }
+.pd-body { flex:1; overflow-y:auto; }
+.pd-section { padding:20px 28px; border-bottom:1px solid var(--border); }
+.pd-section:last-child { border-bottom:none; }
+.pd-section-title { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:1.2px; color:var(--muted); margin-bottom:12px; }
+.pd-detail-row { display:flex; align-items:baseline; gap:10px; margin-bottom:7px; font-size:14px; color:var(--text); }
+.pd-detail-label { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.7px; color:var(--muted); width:88px; flex-shrink:0; }
+.pd-visa-group { margin-bottom:14px; }
+.pd-visa-group:last-child { margin-bottom:0; }
+.pd-visa-group-lbl { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.9px; color:var(--muted); margin-bottom:7px; }
+.pd-visa-pills { display:flex; flex-wrap:wrap; gap:5px; }
+.pd-visa-pill { font-size:11px; padding:3px 9px; border-radius:5px; border:1px solid var(--border); color:var(--text); background:#fff; }
+.pd-visa-pill.expert  { background:var(--accent); color:#fff; border-color:var(--accent); }
+.pd-visa-pill.strong  { background:rgba(61,40,23,.1); color:var(--accent); border-color:rgba(61,40,23,.22); }
+.pd-visa-pill.capable { background:var(--surface); color:var(--muted); border-color:var(--border); }
+.pd-cal-nav { display:flex; align-items:center; gap:12px; margin-bottom:14px; }
+.pd-cal-nav-btn { background:none; border:1.5px solid var(--border); border-radius:6px; cursor:pointer; padding:4px 10px; font-size:14px; color:var(--muted); transition:all .15s; font-family:var(--sans); }
+.pd-cal-nav-btn:hover { border-color:var(--accent); color:var(--accent); }
+.pd-week-lbl { font-size:13px; font-weight:600; color:var(--text); flex:1; text-align:center; }
+.pd-unavail-cal { position:relative; }
+.pd-unavail-blur { filter:blur(5px); pointer-events:none; user-select:none; opacity:.55; }
+.pd-unavail-banner { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; }
+.pd-unavail-pill { background:#fff; border:1.5px solid var(--red-bg); border-radius:10px; padding:14px 22px; text-align:center; box-shadow:0 4px 16px rgba(0,0,0,.1); }
+.pd-unavail-pill-title { font-family:var(--serif); font-size:15px; font-weight:bold; color:var(--red); margin-bottom:4px; }
+.pd-unavail-pill-sub { font-size:12px; color:var(--muted); }
+.cap-warn-overlay { position:fixed; inset:0; background:rgba(0,0,0,.5); z-index:4000; display:flex; align-items:center; justify-content:center; padding:20px; }
+.pd-confirm-backdrop { position:absolute; inset:0; background:rgba(0,0,0,.45); z-index:10; display:flex; align-items:center; justify-content:center; border-radius:16px; }
+.pd-confirm-card { background:#fff; border-radius:14px; padding:32px 28px 24px; max-width:380px; width:90%; box-shadow:0 16px 48px rgba(0,0,0,.25); text-align:center; animation:fadeUp .2s ease; }
+.pd-confirm-icon { font-size:36px; margin-bottom:12px; }
+.pd-confirm-title { font-family:var(--serif); font-size:18px; font-weight:bold; color:var(--text); margin-bottom:8px; }
+.pd-confirm-msg { font-size:14px; color:var(--muted); line-height:1.5; margin-bottom:24px; }
+.pd-confirm-btns { display:flex; gap:10px; justify-content:center; }
+.pd-confirm-cancel { padding:10px 22px; border:1.5px solid var(--border); border-radius:8px; background:#fff; color:var(--muted); font-size:14px; font-weight:600; cursor:pointer; font-family:var(--sans); transition:all .15s; }
+.pd-confirm-cancel:hover { border-color:var(--accent); color:var(--accent); }
+.pd-confirm-book { padding:10px 22px; border:none; border-radius:8px; background:#dc2626; color:#fff; font-size:14px; font-weight:700; cursor:pointer; font-family:var(--sans); transition:background .15s; }
+.pd-confirm-book:hover { background:#b91c1c; }
 
 /* ── Filter bar ── */
 .filter-bar { margin-bottom: 22px; }
@@ -314,7 +346,7 @@ body { background: var(--ground); color: var(--text); font-family: var(--sans); 
   .hdr-sub, .src-badge { display:none; }
   .hdr { padding:12px 16px; }
 }
-@media (prefers-reduced-motion:reduce) { .step, .spinner { animation:none; } .flip-card { transition:none; } }
+@media (prefers-reduced-motion:reduce) { .step, .spinner, .pd-modal { animation:none; } }
 </style>
 
 <header class="hdr">
@@ -338,7 +370,22 @@ body { background: var(--ground); color: var(--text); font-family: var(--sans); 
     <div class="cards-grid" id="cards-grid"></div>
   </div>
 
-  <!-- Password modal -->
+  <!-- Global Low-Capacity Warning -->
+  <div id="cap-warn-modal" style="display:none" class="cap-warn-overlay" onclick="if(event.target===this)cancelCapWarn()">
+    <div class="pd-confirm-card">
+      <div class="pd-confirm-icon">⚠️</div>
+      <div class="pd-confirm-title">Low Capacity Warning</div>
+      <div class="pd-confirm-msg">This pod's capacity is currently low. Are you sure you want to book this consultation?</div>
+      <div class="pd-confirm-btns">
+        <button class="pd-confirm-cancel" onclick="cancelCapWarn()">Cancel</button>
+        <button class="pd-confirm-book" onclick="confirmCapWarn()">Book anyway</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pod Detail Overlay -->
+  <div id="pod-detail-overlay" style="display:none" class="pd-overlay" onclick="if(event.target===this)closePodDetail()"></div>
+
   <!-- Availability modal -->
   <div id="avail-modal" style="display:none" class="avail-modal-overlay" onclick="if(event.target===this)closeAvailModal()">
     <div class="avail-modal">
@@ -510,12 +557,6 @@ function togInd(i)  { _tog(F.industries,i); renderCards(); }
 function togPanel() { F.open=!F.open;        renderCards(); }
 function clearF()   { F.visas=[]; F.languages=[]; F.industries=[]; renderCards(); }
 
-/* ── Flip card toggle ───────────────────────────────────────────────── */
-function toggleFlip(slug) {
-  const el = document.querySelector('.flip-card[data-slug="' + slug + '"]');
-  if (el) el.classList.toggle('flipped');
-}
-
 /* ── Render cards (B2B Pods tab) ────────────────────────────────────── */
 function renderCards() {
   // Drive entirely from POD_CAPACITY keys — the sheet is the source of truth.
@@ -622,10 +663,7 @@ function buildCard(a, cap, slug) {
 
   const capFront = lbl ? `<span class="cap-badge ${cls}">${lbl}</span>` : '';
 
-  let cta;
-  if (a.doNotSend)              cta = `<span class="fc-cta off">Unavailable</span>`;
-  else if (isSeller && a.link)  cta = `<a class="fc-cta" href="${esc(a.link)}" target="_blank" rel="noopener" onclick="event.stopPropagation()">Book Consultation ↗</a>`;
-  else                          cta = `<button class="fc-cta-avail" onclick="event.stopPropagation();openAvailModal('${esc(a.email)}','${esc(a.name)}')">Check Availability</button>`;
+  const cta = `<button class="fc-cta-avail" onclick="event.stopPropagation();openPodDetail('${esc(slug)}')">Pod Details</button>`;
 
   const sizes = (a.clientSizes||[]).map(s=>`<span class="fc-size">${s}</span>`).join('');
   const dns   = a.doNotSend ? `<p class="fc-dns">Temporarily unavailable for consultations</p>` : '';
@@ -651,8 +689,9 @@ function buildCard(a, cap, slug) {
     }
   }
 
+  const capCls = cls ? ` cap-${cls}` : '';
   const front = `
-    <div class="flip-face flip-front" onclick="toggleFlip('${esc(slug)}')">
+    <div class="flip-face flip-front${capCls}">
       <div class="fc-scroll-area">
         <div class="fc-header">
           <div class="fc-top">
@@ -662,7 +701,6 @@ function buildCard(a, cap, slug) {
             </div>
             <div class="fc-badges">
               <span class="fc-status ${sCls}">${sLbl}</span>
-              ${capFront}
             </div>
           </div>
           <p class="fc-email">${esc(a.email)}</p>
@@ -672,39 +710,13 @@ function buildCard(a, cap, slug) {
         </div>
         ${body ? `<div class="fc-body">${body}</div>` : ''}
       </div>
-      <div class="fc-hint">Tap to see capacity →</div>
     </div>`;
 
-  // ── Back ──
-  const prodHtml = prodAttys.length
-    ? prodAttys.map(name=>`<div class="fb-prod-item"><span class="fb-dot"></span>${esc(name)}</div>`).join('')
-    : `<div style="font-size:13px;color:rgba(255,255,255,.4);font-style:italic">None assigned</div>`;
-
-  const refreshLine = cap.lastRefreshed
-    ? `<div style="font-size:11px;color:rgba(255,255,255,.3);margin-top:auto;padding-top:12px">BQ updated ${fmtTs(cap.lastRefreshed)}</div>` : '';
-
-  const back = `
-    <div class="flip-face flip-back" onclick="toggleFlip('${esc(slug)}')">
-      <div class="fb-eyebrow">Pod Capacity</div>
-      <div style="font-family:var(--serif);font-size:18px;font-weight:bold;color:#fff;margin-bottom:10px;line-height:1.2">${esc(cap.podName||a.podName||a.name)}</div>
-      <div class="fb-pct-row">
-        <span class="fb-pct">${pct}%</span>
-        <span class="fb-word">utilized</span>
-      </div>
-      <div class="fb-track"><div class="fb-bar" style="width:${Math.min(pct,100)}%;background:${barClr}"></div></div>
-      ${lbl ? `<span class="fb-cap-inv ${cls}">${lbl} Capacity</span>` : ''}
-      <div class="fb-divider"></div>
-      <div class="fb-eyebrow">Production Attorneys</div>
-      ${prodHtml}
-      ${refreshLine}
-      <div class="fb-hint">← Tap to flip back</div>
-    </div>`;
-
-  return `<div class="flip-scene"><div class="flip-card" data-slug="${esc(slug)}">${front}${back}</div></div>`;
+  return `<div class="flip-scene"><div class="flip-card" data-slug="${esc(slug)}">${front}</div></div>`;
 }
 
 /* ── Wizard ─────────────────────────────────────────────────────────── */
-const S = { step:1, clientSize:null, visas:[], visaUnknown:false, slots:[], pickerDate:null, availability:null, availabilityLoading:false };
+const S = { step:1, company:'', clientSize:null, visas:[], visaUnknown:false, slots:[], pickerDate:null, availability:null, availabilityLoading:false };
 const STEPS = ['Client','Visa','Time','Results'];
 let _availGen = 0;
 
@@ -752,8 +764,12 @@ function renderStep() {
 function step1() {
   return `<div class="step">
     <div class="step-eyebrow">Step 1 of 4</div>
-    <h1 class="step-title">What is the client's company size?</h1>
-    <p class="step-sub">Filters attorneys configured for that client tier.</p>
+    <h1 class="step-title">Who is the client?</h1>
+    <p class="step-sub">Enter the company name, then select their size to filter attorneys.</p>
+    <div style="margin-bottom:28px">
+      <label style="display:block;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1.2px;color:var(--muted);margin-bottom:8px">Company Name</label>
+      <input id="company-input" class="date-input" type="text" placeholder="e.g. Acme Corp" value="${esc(S.company)}" style="margin-bottom:0">
+    </div>
     <div class="size-grid">
       ${['Micro SMB','SMB','Mid-Market','Enterprise'].map(s=>`
         <button class="size-btn${S.clientSize===s?' on':''}" data-s="${s}">
@@ -908,23 +924,24 @@ function resultCard(a, rank) {
         const free = (av.slots||{})[slot.iso];
         const lbl  = slot.label.split(' · ').slice(1).join(' · ') || slot.label;
         if (free) {
-          return `<button class="avail-pill free bookable" title="Click to book this slot" onclick="bookSlot('${slot.iso}','${esc(a.email)}','${esc(a.name)}')">📅 ${esc(lbl)}</button>`;
+          return `<button class="avail-pill free bookable" title="Click to book this slot" onclick="wizardBook('${slot.iso}','${esc(a.email)}','${esc(a.name)}','${esc(a.podSlug)}',null)">📅 ${esc(lbl)}</button>`;
         }
         return `<span class="avail-pill busy">${esc(lbl)}</span>`;
       }).join('');
       availHtml = `<div class="avail-slots">${pills}</div>`;
       if (!hasFreeSlot && av.nextAvailable) {
         const nextIso = av.nextAvailable;
-        availHtml += `<div class="avail-next">→ Next available: <button class="avail-next-btn" onclick="bookSlot('${nextIso}','${esc(a.email)}','${esc(a.name)}')">📅 ${esc(fmtSlotISO(nextIso))}</button></div>`;
+        availHtml += `<div class="avail-next">→ Next available: <button class="avail-next-btn" onclick="wizardBook('${nextIso}','${esc(a.email)}','${esc(a.name)}','${esc(a.podSlug)}',null)">📅 ${esc(fmtSlotISO(nextIso))}</button></div>`;
       }
     }
   }
 
-  const book = hasFreeSlot
-    ? ''
-    : a.link&&a.link!=='N/A'
-      ? `<a class="btn-book" href="${esc(a.link)}" target="_blank" rel="noopener">Book ↗</a>`
-      : '';
+  let book = '';
+  if (!S.slots.length) {
+    book = `<button class="btn-book" onclick="openPodDetail('${esc(a.podSlug)}')">📅 Check Availability</button>`;
+  } else if (!hasFreeSlot && a.link && a.link !== 'N/A') {
+    book = `<button class="btn-book" onclick="wizardBook(null,'${esc(a.email)}','${esc(a.name)}','${esc(a.podSlug)}','${esc(a.link)}')">Book ↗</button>`;
+  }
   return `<div class="atty-card">
     <div class="score-bar ${bc}"></div>
     <div class="atty-body">
@@ -1007,6 +1024,8 @@ function bindWizard() {
   document.querySelectorAll('.size-btn').forEach(btn => {
     btn.addEventListener('click', ()=>{ S.clientSize=btn.dataset.s; renderStep(); });
   });
+  const ci = document.getElementById('company-input');
+  if (ci) ci.addEventListener('input', ()=>{ S.company = ci.value.trim(); });
   gel('n1', ()=>{ S.step=2; renderTrack(); renderStep(); });
 
   gel('vunk', ()=>{ S.visaUnknown=!S.visaUnknown; if(S.visaUnknown)S.visas=[]; renderStep(); });
@@ -1027,7 +1046,7 @@ function bindWizard() {
   if(dp) dp.addEventListener('change',()=>{ S.pickerDate=dp.value||null; renderStep(); });
 
   gel('b4', ()=>{ S.availability=null; S.availabilityLoading=false; ++_availGen; S.step=3; renderTrack(); renderStep(); });
-  gel('rs', ()=>{ S.step=1; S.clientSize=null; S.visas=[]; S.visaUnknown=false; S.slots=[]; S.pickerDate=null; S.availability=null; S.availabilityLoading=false; ++_availGen; renderTrack(); renderStep(); });
+  gel('rs', ()=>{ S.step=1; S.company=''; S.clientSize=null; S.visas=[]; S.visaUnknown=false; S.slots=[]; S.pickerDate=null; S.availability=null; S.availabilityLoading=false; ++_availGen; renderTrack(); renderStep(); });
 }
 
 function gel(id, fn) { const e=document.getElementById(id); if(e) e.addEventListener('click',fn); }
@@ -1167,15 +1186,16 @@ function renderAvailGrid(days, avail) {
     </div>`;
 }
 
-function bookSlot(iso, email, name) {
-  email = email || _availModal.email || '';
-  name  = name  || _availModal.name  || 'Attorney';
+function bookSlot(iso, email, name, company) {
+  email   = email   || _availModal.email || '';
+  name    = name    || _availModal.name  || 'Attorney';
+  company = company || S.company || '';
   const start  = new Date(iso);
   const end    = new Date(start.getTime() + 30 * 60 * 1000);
   const fmt    = d => d.toISOString().replace(/[-:]/g,'').replace(/\.\d{3}/,'');
   const dates  = fmt(start) + '/' + fmt(end);
-  const title  = encodeURIComponent('B2B Consultation – ' + name);
-  const detail = encodeURIComponent('Booked via Manifest B2B routing tool.\n\nAttorney: ' + name);
+  const title  = encodeURIComponent('Manifest Law <> ' + (company || '[Company Name]'));
+  const detail = encodeURIComponent('Booked via Manifest B2B routing tool.\n\nAttorney: ' + name + (company ? '\nCompany: ' + company : ''));
   const url    = 'https://calendar.google.com/calendar/render?action=TEMPLATE'
     + '&text='    + title
     + '&dates='   + dates
@@ -1183,6 +1203,252 @@ function bookSlot(iso, email, name) {
     + '&add='     + encodeURIComponent(email)
     + '&sf=true';
   window.open(url, '_blank', 'noopener');
+}
+
+/* ── Pod Detail Overlay ─────────────────────────────────────────────── */
+let _podDetail = { slug: null, email: null, name: null, doNotSend: false, weekOffset: 0, data: {} };
+
+function openPodDetail(slug) {
+  const cap   = POD_CAPACITY[slug] || {};
+  const leads = ALL_ATTORNEYS.filter(a => a.podSlug === slug && (a.tags||[]).includes('Practice Lead'));
+  if (!leads.length) return;
+
+  let lead;
+  if (slug === 'nadia-lucia') {
+    const N = leads.find(a => a.email === 'n.zaidi@manifestlaw.com') || leads[0];
+    const L = leads.find(a => a.email === 'l.maxwell@manifestlaw.com') || leads[1] || leads[0];
+    lead = {
+      ...N,
+      name:      'Nadia Zaidi & Lucia Maxwell',
+      podName:   cap.podName || "Nadia & Lucia's Pod",
+      link:      L.link || N.link,
+      doNotSend: N.doNotSend || L.doNotSend,
+      scores:    mergeScores(N.scores||{}, L.scores||{}),
+      languages: uniq([...(N.languages||[]),...(L.languages||[])]),
+      industries:[...new Set([...(N.industries||[]),...(L.industries||[])])],
+    };
+    _podDetail.email = N.email;
+  } else {
+    lead = { ...leads[0], podName: cap.podName || leads[0].name + "'s Pod" };
+    _podDetail.email = lead.email;
+  }
+
+  _podDetail.slug       = slug;
+  _podDetail.name       = lead.name;
+  _podDetail.doNotSend  = lead.doNotSend || false;
+  _podDetail.weekOffset = 0;
+  _podDetail.data       = {};
+
+  renderPodDetail(lead, cap, slug);
+
+  const overlay = document.getElementById('pod-detail-overlay');
+  overlay.style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+  if (!lead.doNotSend) loadPodCalWeek();
+}
+
+function closePodDetail() {
+  document.getElementById('pod-detail-overlay').style.display = 'none';
+  document.body.style.overflow = '';
+  _pendingPodSlot = null;
+}
+
+function navPodWeek(dir) {
+  _podDetail.weekOffset += dir;
+  loadPodCalWeek();
+}
+
+function renderPodDetail(a, cap, slug) {
+  const lbl       = cap.label || '';
+  const cls       = lbl.toLowerCase();
+  const pct       = Math.round((cap.utilization||0) * 100);
+  const prodAttys = cap.productionAttorneys || [];
+  const expert    = Object.entries(a.scores||{}).filter(([,s])=>s===5).map(([v])=>v);
+  const strong    = Object.entries(a.scores||{}).filter(([,s])=>s===4).map(([v])=>v);
+  const capable   = Object.entries(a.scores||{}).filter(([,s])=>s===3).map(([v])=>v);
+  const inds      = (a.industries||[]).filter(i=>i&&i!=='Other:');
+  const langs     = a.languages||[];
+  const hdrBg     = cls==='low' ? '#dc2626' : cls==='medium' ? '#d97706' : '#16a34a';
+  const prodChips = prodAttys.map(n=>`<span class="pd-prod-chip">${esc(n)}</span>`).join('');
+
+  document.getElementById('pod-detail-overlay').innerHTML = `
+<div class="pd-modal" onclick="event.stopPropagation()">
+  <div class="pd-header" style="background:${hdrBg}">
+    <div class="pd-header-top">
+      <div>
+        <div class="pd-pod-name">${esc(a.podName||a.name)}</div>
+        <div class="pd-atty-name">${esc(a.name)}</div>
+      </div>
+      <button class="pd-close" onclick="closePodDetail()">×</button>
+    </div>
+    <div class="pd-cap-row">
+      <div class="pd-pct-big">${pct}%</div>
+      <div class="pd-cap-meta">
+        <span class="pd-cap-lbl">utilized</span>
+        ${lbl ? `<span class="pd-cap-badge-inv">${lbl} Capacity</span>` : ''}
+        <div class="pd-track"><div class="pd-track-bar" style="width:${Math.min(pct,100)}%"></div></div>
+      </div>
+    </div>
+    ${prodChips ? `<div class="pd-prod-row">${prodChips}</div>` : ''}
+  </div>
+  <div class="pd-body">
+    <div class="pd-section">
+      <div class="pd-section-title">Attorney Details</div>
+      <div class="pd-detail-row"><span class="pd-detail-label">Email</span>${esc(a.email)}</div>
+      ${(a.clientSizes||[]).length ? `<div class="pd-detail-row"><span class="pd-detail-label">Client Sizes</span>${(a.clientSizes||[]).join(', ')}</div>` : ''}
+      ${a.yearsOfExperience ? `<div class="pd-detail-row"><span class="pd-detail-label">Experience</span>${esc(a.yearsOfExperience)} years</div>` : ''}
+      ${(a.tags||[]).length ? `<div class="pd-detail-row"><span class="pd-detail-label">Tags</span>${(a.tags||[]).join(' · ')}</div>` : ''}
+    </div>
+    ${langs.length ? `<div class="pd-section">
+      <div class="pd-section-title">Languages</div>
+      <div class="fc-pills">${langs.map(l=>`<span class="fc-pill">${esc(l)}</span>`).join('')}</div>
+    </div>` : ''}
+    ${inds.length ? `<div class="pd-section">
+      <div class="pd-section-title">Industries</div>
+      <div class="fc-pills">${inds.map(i=>`<span class="fc-pill">${esc(shortLbl(i))}</span>`).join('')}</div>
+    </div>` : ''}
+    <div class="pd-section">
+      <div class="pd-section-title">Visa Expertise</div>
+      ${expert.length  ? `<div class="pd-visa-group"><div class="pd-visa-group-lbl">Expert (5/5)</div><div class="pd-visa-pills">${expert.map(v=>`<span class="pd-visa-pill expert">${esc(v)}</span>`).join('')}</div></div>`  : ''}
+      ${strong.length  ? `<div class="pd-visa-group"><div class="pd-visa-group-lbl">Strong (4/5)</div><div class="pd-visa-pills">${strong.map(v=>`<span class="pd-visa-pill strong">${esc(v)}</span>`).join('')}</div></div>`  : ''}
+      ${capable.length ? `<div class="pd-visa-group"><div class="pd-visa-group-lbl">Capable (3/5)</div><div class="pd-visa-pills">${capable.map(v=>`<span class="pd-visa-pill capable">${esc(v)}</span>`).join('')}</div></div>` : ''}
+    </div>
+    <div class="pd-section">
+      <div class="pd-section-title" style="margin-bottom:10px">Availability (ET)</div>
+      ${a.doNotSend ? `
+      <div class="pd-unavail-cal">
+        <div class="pd-unavail-blur">
+          <div class="pd-cal-nav" style="pointer-events:none">
+            <button class="pd-cal-nav-btn">← Prev</button>
+            <span class="pd-week-lbl">— — —</span>
+            <button class="pd-cal-nav-btn">Next →</button>
+          </div>
+          <div style="display:grid;grid-template-columns:52px repeat(5,1fr);gap:4px;margin-bottom:4px">
+            <div></div>${['Mon','Tue','Wed','Thu','Fri'].map(d=>`<div class="avail-day-hdr">${d}</div>`).join('')}
+          </div>
+          ${['11 AM','11:30','12 PM','12:30','1 PM','1:30','2 PM','2:30','3 PM','3:30','4 PM','4:30'].map(t=>`
+            <div style="display:grid;grid-template-columns:52px repeat(5,1fr);gap:4px;margin-bottom:4px">
+              <div class="avail-time-lbl">${t}</div>
+              ${[0,1,2,3,4].map(()=>`<div class="avail-cell ${Math.random()>.5?'busy':'free'}"></div>`).join('')}
+            </div>`).join('')}
+        </div>
+        <div class="pd-unavail-banner">
+          <div class="pd-unavail-pill">
+            <div class="pd-unavail-pill-title">Currently Unavailable</div>
+            <div class="pd-unavail-pill-sub">This attorney is not available for new consultations</div>
+          </div>
+        </div>
+      </div>` : `
+      <div class="pd-cal-nav">
+        <button class="pd-cal-nav-btn" onclick="navPodWeek(-1)">← Prev</button>
+        <span class="pd-week-lbl" id="pd-week-lbl">Loading…</span>
+        <button class="pd-cal-nav-btn" onclick="navPodWeek(1)">Next →</button>
+      </div>
+      <div id="pd-cal-grid"><div style="padding:32px 0;text-align:center;color:var(--muted)">Loading calendar…</div></div>
+      <div class="avail-legend" style="margin-top:12px">
+        <div class="avail-legend-item"><div class="avail-legend-dot" style="background:#2563eb"></div>Available — click to book</div>
+        <div class="avail-legend-item"><div class="avail-legend-dot" style="background:#ef4444"></div>Busy</div>
+        <div class="avail-legend-item"><div class="avail-legend-dot" style="background:#f1f1f1;border:1px solid #ddd"></div>Past</div>
+      </div>`}
+    </div>
+  </div>
+</div>`;
+}
+
+async function loadPodCalWeek() {
+  const days  = getWeekDates(_podDetail.weekOffset);
+  const slots = [];
+  for (const d of days) {
+    const dStr = etDateStr(d);
+    for (const t of TIME_SLOTS) slots.push(slotToISO(dStr, t));
+  }
+
+  const first = days[0], last = days[4];
+  const fmt   = d => d.toLocaleDateString('en-US',{timeZone:'America/New_York',month:'short',day:'numeric'});
+  const wlbl  = document.getElementById('pd-week-lbl');
+  if (wlbl) wlbl.textContent = `Week of ${fmt(first)} – ${fmt(last)}`;
+
+  renderPodCalGrid(days, null);
+
+  try {
+    const url  = APPS_SCRIPT_URL + '?action=checkAvailability'
+      + '&emails=' + encodeURIComponent(_podDetail.email)
+      + '&slots='  + encodeURIComponent(slots.join(','));
+    const res  = await fetch(url);
+    const data = await res.json();
+    _podDetail.data = data[_podDetail.email] || {};
+  } catch(e) {
+    _podDetail.data = { error: e.message };
+  }
+  renderPodCalGrid(days, _podDetail.data);
+}
+
+function renderPodCalGrid(days, avail) {
+  const grid     = document.getElementById('pd-cal-grid');
+  if (!grid) return;
+  const now      = new Date();
+  const etNow    = new Date(now.toLocaleString('en-US',{timeZone:'America/New_York'}));
+  const todayStr = etDateStr(etNow);
+  const gridStyle = 'grid-template-columns: 52px repeat(5, 1fr);';
+
+  const dayHdrs = days.map(d => {
+    const dStr    = etDateStr(d);
+    const isToday = dStr === todayStr;
+    const lbl     = d.toLocaleDateString('en-US',{timeZone:'America/New_York',weekday:'short',month:'numeric',day:'numeric'});
+    return `<div class="avail-day-hdr${isToday?' today':''}">${lbl}</div>`;
+  }).join('');
+
+  const rows = TIME_SLOTS.map(t => {
+    const cells = days.map(d => {
+      const dStr     = etDateStr(d);
+      const iso      = slotToISO(dStr, t);
+      const slotDate = new Date(iso);
+      if (slotDate <= now) return `<div class="avail-cell past"></div>`;
+      if (!avail) return `<div class="avail-cell loading"></div>`;
+      if (avail.accessible === false) return `<div class="avail-cell busy" title="Calendar not shared"></div>`;
+      const free = (avail.slots||{})[iso];
+      if (free) return `<div class="avail-cell free" title="Click to book" onclick="bookPodSlot('${iso}')"></div>`;
+      return `<div class="avail-cell busy"></div>`;
+    }).join('');
+    return `<div class="avail-row" style="${gridStyle}"><div class="avail-time-lbl">${fmtTimeStr(t)}</div>${cells}</div>`;
+  }).join('');
+
+  const notAccessible = avail && avail.accessible === false;
+  grid.innerHTML = `
+    <div class="avail-cal-head" style="display:grid;${gridStyle}"><div></div>${dayHdrs}</div>
+    ${notAccessible ? `<div style="padding:24px;text-align:center;color:var(--amber)">⚠ Calendar not shared with this account.</div>` : rows}`;
+}
+
+/* ── Global low-cap warning (shared by wizard + pod overlay) ─────────── */
+let _capWarnCb = null;
+
+function showCapWarn(cb) {
+  _capWarnCb = cb;
+  document.getElementById('cap-warn-modal').style.display = 'flex';
+}
+function confirmCapWarn() {
+  document.getElementById('cap-warn-modal').style.display = 'none';
+  if (_capWarnCb) { _capWarnCb(); _capWarnCb = null; }
+}
+function cancelCapWarn() {
+  document.getElementById('cap-warn-modal').style.display = 'none';
+  _capWarnCb = null;
+}
+
+function wizardBook(iso, email, name, podSlug, link) {
+  const cap = POD_CAPACITY[podSlug] || {};
+  const doBook = () => {
+    if (link) window.open(link, '_blank', 'noopener');
+    else bookSlot(iso, email, name, S.company);
+  };
+  if (cap.label === 'Low') showCapWarn(doBook);
+  else doBook();
+}
+
+let _pendingPodSlot = null;
+
+function bookPodSlot(iso) {
+  wizardBook(iso, _podDetail.email, _podDetail.name, _podDetail.slug, null);
 }
 
 /* ── Init ───────────────────────────────────────────────────────────── */

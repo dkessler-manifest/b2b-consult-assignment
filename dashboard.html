@@ -288,7 +288,8 @@ body { background: var(--ground); color: var(--text); font-family: var(--sans); 
 .avail-row { display:grid; gap:4px; margin-bottom:4px; align-items:center; }
 .avail-time-lbl { font-size:10px; color:var(--muted); font-weight:600; text-align:right; padding-right:8px; white-space:nowrap; }
 .avail-cell { height:28px; border-radius:5px; font-size:10px; font-weight:700; display:flex; align-items:center; justify-content:center; }
-.avail-cell.free { background:#2563eb; color:#fff; }
+.avail-cell.free { background:#2563eb; color:#fff; cursor:pointer; transition:filter .12s; }
+.avail-cell.free:hover { filter:brightness(1.15); }
 .avail-cell.busy { background:#ef4444; color:#fff; }
 .avail-cell.past { background:#f1f1f1; color:#ccc; }
 .avail-cell.loading { background:#e5e7eb; animation:pulse 1.2s ease-in-out infinite; }
@@ -1163,7 +1164,10 @@ function renderAvailGrid(days, avail) {
       if (!avail) return `<div class="avail-cell loading"></div>`;
       if (!avail.accessible && avail.accessible !== undefined) return `<div class="avail-cell busy" title="Calendar not shared"></div>`;
       const free = (avail.slots||{})[iso];
-      return `<div class="avail-cell ${free?'free':'busy'}" title="${free?'Available':'Busy'}"></div>`;
+      if (free) {
+        return `<div class="avail-cell free" title="Click to book" onclick="bookSlot('${iso}')"></div>`;
+      }
+      return `<div class="avail-cell busy"></div>`;
     }).join('');
     return `<div class="avail-row" style="${gridStyle}"><div class="avail-time-lbl">${fmtTimeStr(t)}</div>${cells}</div>`;
   }).join('');
@@ -1178,10 +1182,28 @@ function renderAvailGrid(days, avail) {
       ? `<div style="padding:24px;text-align:center;color:var(--amber)">⚠ Calendar not shared with this account.</div>`
       : rows}
     <div class="avail-legend">
-      <div class="avail-legend-item"><div class="avail-legend-dot" style="background:#2563eb"></div>Available</div>
+      <div class="avail-legend-item"><div class="avail-legend-dot" style="background:#2563eb"></div>Available — click to book</div>
       <div class="avail-legend-item"><div class="avail-legend-dot" style="background:#ef4444"></div>Busy</div>
       <div class="avail-legend-item"><div class="avail-legend-dot" style="background:#f1f1f1;border:1px solid #ddd"></div>Past</div>
     </div>`;
+}
+
+function bookSlot(iso) {
+  const start  = new Date(iso);
+  const end    = new Date(start.getTime() + 30 * 60 * 1000);
+  const fmt    = d => d.toISOString().replace(/[-:]/g,'').replace(/\.\d{3}/,'');
+  const dates  = fmt(start) + '/' + fmt(end);
+  const name   = _availModal.name || 'Attorney';
+  const email  = _availModal.email || '';
+  const title  = encodeURIComponent('B2B Consultation – ' + name);
+  const detail = encodeURIComponent('Booked via Manifest B2B routing tool.\n\nAttorney: ' + name);
+  const url    = 'https://calendar.google.com/calendar/render?action=TEMPLATE'
+    + '&text='    + title
+    + '&dates='   + dates
+    + '&details=' + detail
+    + '&add='     + encodeURIComponent(email)
+    + '&sf=true';
+  window.open(url, '_blank', 'noopener');
 }
 
 /* ── Init ───────────────────────────────────────────────────────────── */

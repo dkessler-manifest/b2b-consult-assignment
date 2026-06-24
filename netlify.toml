@@ -1,3 +1,6 @@
 [build]
-  publish = "."
-  command = ""
+  command = "mkdir -p out && cp dashboard.html out/index.html"
+  publish = "out"
+
+[build.environment]
+  NETLIFY_NEXT_PLUGIN_SKIP = "true"

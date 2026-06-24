@@ -73,7 +73,7 @@ body { background: var(--ground); color: var(--text); font-family: var(--sans); 
   backface-visibility: hidden; -webkit-backface-visibility: hidden;
   border-radius: var(--radius); overflow: hidden; border: 1.5px solid var(--border);
 }
-.flip-front { background: #fff; display: flex; flex-direction: column; overflow-y: auto; }
+.flip-front { background: #fff; display: flex; flex-direction: column; overflow: hidden; }
 .flip-back {
   transform: rotateY(180deg);
   background: var(--accent); border-color: var(--accent); color: #fff;
@@ -101,7 +101,7 @@ body { background: var(--ground); color: var(--text); font-family: var(--sans); 
 }
 .fc-cta:hover { background: var(--accent-h); }
 .fc-cta.off { background: var(--surface); color: var(--muted); border: 1.5px solid var(--border); cursor: default; }
-.fc-body { padding: 14px 20px; display: flex; flex-direction: column; gap: 12px; flex: 1; }
+.fc-body { padding: 14px 20px; display: flex; flex-direction: column; gap: 12px; flex: 1; overflow-y: auto; min-height: 0; }
 .fc-section-lbl { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); margin-bottom: 6px; }
 .fc-pills { display: flex; flex-wrap: wrap; gap: 5px; }
 .fc-pill { font-size: 11px; padding: 3px 9px; border-radius: 5px; border: 1px solid var(--border); color: var(--text); background: #fff; }
@@ -287,10 +287,10 @@ body { background: var(--ground); color: var(--text); font-family: var(--sans); 
 .avail-row { display:grid; gap:4px; margin-bottom:4px; align-items:center; }
 .avail-time-lbl { font-size:10px; color:var(--muted); font-weight:600; text-align:right; padding-right:8px; white-space:nowrap; }
 .avail-cell { height:28px; border-radius:5px; font-size:10px; font-weight:700; display:flex; align-items:center; justify-content:center; }
-.avail-cell.free { background:var(--green-bg); color:var(--green); }
-.avail-cell.busy { background:var(--surface); color:var(--border); }
-.avail-cell.past { background:#f9f9f9; color:#ddd; }
-.avail-cell.loading { background:var(--surface); animation:pulse 1.2s ease-in-out infinite; }
+.avail-cell.free { background:#16a34a; color:#fff; }
+.avail-cell.busy { background:#ef4444; color:#fff; }
+.avail-cell.past { background:#f1f1f1; color:#ccc; }
+.avail-cell.loading { background:#e5e7eb; animation:pulse 1.2s ease-in-out infinite; }
 @keyframes pulse { 0%,100%{opacity:.5} 50%{opacity:1} }
 .avail-legend { display:flex; gap:16px; align-items:center; padding-top:14px; border-top:1px solid var(--surface); margin-top:4px; }
 .avail-legend-item { display:flex; align-items:center; gap:6px; font-size:11px; color:var(--muted); }
@@ -1177,9 +1177,9 @@ function renderAvailGrid(days, avail) {
       ? `<div style="padding:24px;text-align:center;color:var(--amber)">⚠ Calendar not shared with this account.</div>`
       : rows}
     <div class="avail-legend">
-      <div class="avail-legend-item"><div class="avail-legend-dot" style="background:var(--green-bg);border:1px solid #bbf7d0"></div>Available</div>
-      <div class="avail-legend-item"><div class="avail-legend-dot" style="background:var(--surface);border:1px solid var(--border)"></div>Busy</div>
-      <div class="avail-legend-item"><div class="avail-legend-dot" style="background:#f9f9f9;border:1px solid #eee"></div>Past</div>
+      <div class="avail-legend-item"><div class="avail-legend-dot" style="background:#16a34a"></div>Available</div>
+      <div class="avail-legend-item"><div class="avail-legend-dot" style="background:#ef4444"></div>Busy</div>
+      <div class="avail-legend-item"><div class="avail-legend-dot" style="background:#f1f1f1;border:1px solid #ddd"></div>Past</div>
     </div>`;
 }
 

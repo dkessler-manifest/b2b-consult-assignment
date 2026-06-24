@@ -73,7 +73,7 @@ body { background: var(--ground); color: var(--text); font-family: var(--sans); 
   backface-visibility: hidden; -webkit-backface-visibility: hidden;
   border-radius: var(--radius); overflow: hidden; border: 1.5px solid var(--border);
 }
-.flip-front { background: #fff; display: flex; flex-direction: column; overflow: hidden; }
+.flip-front { background: #fff; display: flex; flex-direction: column; overflow: clip; }
 .fc-scroll-wrap { display: flex; flex-direction: column; flex: 1; overflow-y: auto; min-height: 0; }
 .flip-back {
   transform: rotateY(180deg);

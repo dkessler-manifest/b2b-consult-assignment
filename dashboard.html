@@ -1163,7 +1163,7 @@ function renderAvailGrid(days, avail) {
       if (!avail) return `<div class="avail-cell loading"></div>`;
       if (!avail.accessible && avail.accessible !== undefined) return `<div class="avail-cell busy" title="Calendar not shared"></div>`;
       const free = (avail.slots||{})[iso];
-      return `<div class="avail-cell ${free?'free':'busy'}" title="${free?'Available':'Busy'}">${free?'':'·'}</div>`;
+      return `<div class="avail-cell ${free?'free':'busy'}" title="${free?'Available':'Busy'}"></div>`;
     }).join('');
     return `<div class="avail-row" style="${gridStyle}"><div class="avail-time-lbl">${fmtTimeStr(t)}</div>${cells}</div>`;
   }).join('');

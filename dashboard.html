@@ -262,8 +262,8 @@ body { background: var(--ground); color: var(--text); font-family: var(--sans); 
 .avail-slots { display:flex; flex-wrap:wrap; gap:6px; margin-top:12px; }
 .avail-pill { font-size:11px; font-weight:600; padding:4px 10px; border-radius:100px; display:flex; align-items:center; gap:5px; }
 .avail-pill.free { background:var(--green-bg); color:var(--green); }
-.avail-pill.bookable { cursor:pointer; transition:filter .12s; }
-.avail-pill.bookable:hover { filter:brightness(.92); }
+.avail-pill.bookable { cursor:pointer; transition:filter .12s; border:none; font-family:var(--sans); font-size:11px; font-weight:600; }
+.avail-pill.bookable:hover { filter:brightness(.88); }
 .avail-pill.busy { background:var(--surface); color:var(--muted); border:1px solid var(--border); }
 .avail-pill::before { content:''; display:inline-block; width:6px; height:6px; border-radius:50%; background:currentColor; }
 .avail-next { margin-top:8px; font-size:12px; color:var(--muted); }
@@ -927,30 +927,33 @@ function resultCard(a, rank) {
   }
 
   let availHtml = '';
+  let hasFreeSlot = false;
   if (S.slots.length) {
     const av = a._avail;
     if (!av || !av.accessible) {
       availHtml = `<div class="avail-warn">⚠ Calendar not shared — confirm availability manually</div>`;
     } else {
-      const hasFree = Object.values(av.slots||{}).some(Boolean);
-      const pills   = S.slots.map(slot=>{
+      hasFreeSlot = Object.values(av.slots||{}).some(Boolean);
+      const pills = S.slots.map(slot=>{
         const free = (av.slots||{})[slot.iso];
         const lbl  = slot.label.split(' · ').slice(1).join(' · ') || slot.label;
         if (free) {
-          return `<span class="avail-pill free bookable" title="Click to book this slot" onclick="bookSlot('${slot.iso}','${esc(a.email)}','${esc(a.name)}')">${esc(lbl)}</span>`;
+          return `<button class="avail-pill free bookable" title="Click to book this slot" onclick="bookSlot('${slot.iso}','${esc(a.email)}','${esc(a.name)}')">📅 ${esc(lbl)}</button>`;
         }
         return `<span class="avail-pill busy">${esc(lbl)}</span>`;
       }).join('');
       availHtml = `<div class="avail-slots">${pills}</div>`;
-      if (!hasFree && av.nextAvailable) {
+      if (!hasFreeSlot && av.nextAvailable) {
         availHtml += `<div class="avail-next">→ Next available: <strong>${esc(fmtSlotISO(av.nextAvailable))}</strong></div>`;
       }
     }
   }
 
-  const book = a.link&&a.link!=='N/A'
-    ? `<a class="btn-book" href="${esc(a.link)}" target="_blank" rel="noopener">Book ↗</a>`
-    : `<span class="btn-book-off">No booking link</span>`;
+  const book = hasFreeSlot
+    ? ''
+    : a.link&&a.link!=='N/A'
+      ? `<a class="btn-book" href="${esc(a.link)}" target="_blank" rel="noopener">Book ↗</a>`
+      : `<span class="btn-book-off">No booking link</span>`;
   return `<div class="atty-card">
     <div class="score-bar ${bc}"></div>
     <div class="atty-body">

@@ -268,6 +268,35 @@ body { background: var(--ground); color: var(--text); font-family: var(--sans); 
 .avail-warn { margin-top:10px; font-size:12px; color:var(--amber); }
 .avail-loading { display:flex; align-items:center; gap:12px; padding:32px 0; color:var(--muted); font-size:14px; }
 .spinner-dark { width:16px; height:16px; border:2px solid var(--border); border-top-color:var(--accent); border-radius:50%; animation:spin .7s linear infinite; flex-shrink:0; }
+/* ── Availability modal ── */
+.avail-modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,.5); z-index:2000; display:flex; align-items:center; justify-content:center; padding:20px; }
+.avail-modal { background:#fff; border-radius:14px; width:100%; max-width:680px; max-height:90vh; overflow:hidden; display:flex; flex-direction:column; box-shadow:0 24px 80px rgba(0,0,0,.25); }
+.avail-modal-hdr { padding:20px 24px 16px; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; flex-shrink:0; }
+.avail-modal-title { font-family:var(--serif); font-size:18px; font-weight:bold; color:var(--text); }
+.avail-modal-close { background:none; border:none; cursor:pointer; font-size:22px; color:var(--muted); line-height:1; padding:0; }
+.avail-modal-close:hover { color:var(--text); }
+.avail-modal-nav { padding:12px 24px; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:12px; flex-shrink:0; }
+.avail-modal-nav button { background:none; border:1.5px solid var(--border); border-radius:6px; cursor:pointer; padding:4px 10px; font-size:14px; color:var(--muted); transition:all .15s; }
+.avail-modal-nav button:hover { border-color:var(--accent); color:var(--accent); }
+.avail-week-lbl { font-size:13px; font-weight:600; color:var(--text); flex:1; text-align:center; }
+.avail-modal-body { overflow:auto; padding:16px 24px 24px; flex:1; }
+.avail-cal { display:grid; gap:0; }
+.avail-cal-head { display:grid; gap:4px; margin-bottom:4px; }
+.avail-day-hdr { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.8px; color:var(--muted); text-align:center; padding:4px 0; }
+.avail-day-hdr.today { color:var(--accent); }
+.avail-row { display:grid; gap:4px; margin-bottom:4px; align-items:center; }
+.avail-time-lbl { font-size:10px; color:var(--muted); font-weight:600; text-align:right; padding-right:8px; white-space:nowrap; }
+.avail-cell { height:28px; border-radius:5px; font-size:10px; font-weight:700; display:flex; align-items:center; justify-content:center; }
+.avail-cell.free { background:var(--green-bg); color:var(--green); }
+.avail-cell.busy { background:var(--surface); color:var(--border); }
+.avail-cell.past { background:#f9f9f9; color:#ddd; }
+.avail-cell.loading { background:var(--surface); animation:pulse 1.2s ease-in-out infinite; }
+@keyframes pulse { 0%,100%{opacity:.5} 50%{opacity:1} }
+.avail-legend { display:flex; gap:16px; align-items:center; padding-top:14px; border-top:1px solid var(--surface); margin-top:4px; }
+.avail-legend-item { display:flex; align-items:center; gap:6px; font-size:11px; color:var(--muted); }
+.avail-legend-dot { width:12px; height:12px; border-radius:3px; }
+.fc-cta-avail { display:block; width:100%; padding:9px 0; background:var(--surface); color:var(--accent); border:1.5px solid var(--border); border-radius:7px; font-size:13px; font-weight:700; cursor:pointer; font-family:var(--sans); text-align:center; text-decoration:none; transition:all .18s; margin-top:4px; }
+.fc-cta-avail:hover { background:var(--accent); color:#fff; border-color:var(--accent); }
 @media (max-width:600px) {
   .shell { padding:28px 16px 60px; }
   .cards-grid { grid-template-columns:1fr; }
@@ -312,6 +341,22 @@ body { background: var(--ground); color: var(--text); font-family: var(--sans); 
         <button onclick="closePwModal()" style="flex:1;padding:9px;border:1.5px solid var(--border);background:#fff;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:var(--sans);color:var(--muted)">Cancel</button>
         <button onclick="checkPw()" style="flex:1;padding:9px;background:var(--accent);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--sans)">Enter</button>
       </div>
+    </div>
+  </div>
+
+  <!-- Availability modal -->
+  <div id="avail-modal" style="display:none" class="avail-modal-overlay" onclick="if(event.target===this)closeAvailModal()">
+    <div class="avail-modal">
+      <div class="avail-modal-hdr">
+        <span class="avail-modal-title" id="avail-modal-name"></span>
+        <button class="avail-modal-close" onclick="closeAvailModal()">×</button>
+      </div>
+      <div class="avail-modal-nav">
+        <button onclick="navAvailWeek(-1)">← Prev</button>
+        <span class="avail-week-lbl" id="avail-week-lbl"></span>
+        <button onclick="navAvailWeek(1)">Next →</button>
+      </div>
+      <div class="avail-modal-body" id="avail-modal-body"></div>
     </div>
   </div>
 
@@ -608,7 +653,7 @@ function buildCard(a, cap, slug) {
   let cta;
   if (a.doNotSend)              cta = `<span class="fc-cta off">Unavailable</span>`;
   else if (isSeller && a.link)  cta = `<a class="fc-cta" href="${esc(a.link)}" target="_blank" rel="noopener" onclick="event.stopPropagation()">Book Consultation ↗</a>`;
-  else                          cta = `<span class="fc-cta off">No Booking Link</span>`;
+  else                          cta = `<button class="fc-cta-avail" onclick="event.stopPropagation();openAvailModal('${esc(a.email)}','${esc(a.name)}')">Check Availability</button>`;
 
   const sizes = (a.clientSizes||[]).map(s=>`<span class="fc-size">${s}</span>`).join('');
   const dns   = a.doNotSend ? `<p class="fc-dns">Temporarily unavailable for consultations</p>` : '';
@@ -1005,6 +1050,138 @@ function bindWizard() {
 }
 
 function gel(id, fn) { const e=document.getElementById(id); if(e) e.addEventListener('click',fn); }
+
+/* ── Availability modal ─────────────────────────────────────────────── */
+let _availModal = { email: null, name: null, weekOffset: 0, data: {} };
+
+function openAvailModal(email, name) {
+  _availModal = { email, name, weekOffset: 0, data: {} };
+  document.getElementById('avail-modal-name').textContent = name + ' — Availability';
+  document.getElementById('avail-modal').style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+  loadAvailWeek();
+}
+
+function closeAvailModal() {
+  document.getElementById('avail-modal').style.display = 'none';
+  document.body.style.overflow = '';
+}
+
+function navAvailWeek(dir) {
+  _availModal.weekOffset += dir;
+  loadAvailWeek();
+}
+
+function getWeekDates(offset) {
+  // Returns array of 5 Date objects (Mon–Fri) for the week at offset
+  const now = new Date();
+  // Get Monday of current week in ET
+  const etStr = now.toLocaleDateString('en-US', { timeZone: 'America/New_York', weekday: 'short', year: 'numeric', month: '2-digit', day: '2-digit' });
+  const etNow = new Date(now.toLocaleString('en-US', { timeZone: 'America/New_York' }));
+  const dow   = etNow.getDay(); // 0=Sun
+  const toMon = dow === 0 ? -6 : 1 - dow;
+  const monday = new Date(etNow);
+  monday.setDate(monday.getDate() + toMon + offset * 7);
+  monday.setHours(0, 0, 0, 0);
+  return Array.from({ length: 5 }, (_, i) => {
+    const d = new Date(monday);
+    d.setDate(d.getDate() + i);
+    return d;
+  });
+}
+
+function dateToETStr(d) {
+  return d.toLocaleDateString('en-US', { timeZone: 'America/New_York', year: 'numeric', month: '2-digit', day: '2-digit' })
+    .split('/').reverse().join('-').replace(/^(\d{4})-(\d{2})-(\d{2})$/, '$1-$2-$3')
+    .replace(/(\d{4})-(\d{2})-(\d{2})/, (_, y, m, d) => `${y}-${m}-${d}`);
+}
+
+function etDateStr(d) {
+  const s = d.toLocaleDateString('en-US', { timeZone: 'America/New_York', year: 'numeric', month: '2-digit', day: '2-digit' });
+  const [m, day, y] = s.split('/');
+  return `${y}-${m.padStart(2,'0')}-${day.padStart(2,'0')}`;
+}
+
+async function loadAvailWeek() {
+  const days = getWeekDates(_availModal.weekOffset);
+  const slots = [];
+  for (const d of days) {
+    const dStr = etDateStr(d);
+    for (const t of TIME_SLOTS) {
+      slots.push(slotToISO(dStr, t));
+    }
+  }
+
+  // Update week label
+  const first = days[0], last = days[4];
+  const fmt = d => d.toLocaleDateString('en-US', { timeZone: 'America/New_York', month: 'short', day: 'numeric' });
+  document.getElementById('avail-week-lbl').textContent = `Week of ${fmt(first)} – ${fmt(last)}`;
+
+  // Show loading state
+  renderAvailGrid(days, null);
+
+  // Fetch
+  try {
+    const url = APPS_SCRIPT_URL + '?action=checkAvailability' +
+      '&emails=' + encodeURIComponent(_availModal.email) +
+      '&slots='  + encodeURIComponent(slots.join(','));
+    const res  = await fetch(url);
+    const data = await res.json();
+    _availModal.data = data[_availModal.email] || {};
+  } catch(e) {
+    _availModal.data = { error: e.message };
+  }
+  renderAvailGrid(days, _availModal.data);
+}
+
+function renderAvailGrid(days, avail) {
+  const body  = document.getElementById('avail-modal-body');
+  const now   = new Date();
+  const etNow = new Date(now.toLocaleString('en-US', { timeZone: 'America/New_York' }));
+  const todayStr = etDateStr(etNow);
+
+  const colCount = days.length + 1; // 1 label col + 5 day cols
+  const gridStyle = `grid-template-columns: 52px repeat(5, 1fr);`;
+
+  // Header row
+  const dayHdrs = days.map(d => {
+    const dStr = etDateStr(d);
+    const isToday = dStr === todayStr;
+    const lbl = d.toLocaleDateString('en-US', { timeZone: 'America/New_York', weekday: 'short', month: 'numeric', day: 'numeric' });
+    return `<div class="avail-day-hdr${isToday?' today':''}">${lbl}</div>`;
+  }).join('');
+
+  // Time rows
+  const rows = TIME_SLOTS.map(t => {
+    const cells = days.map(d => {
+      const dStr = etDateStr(d);
+      const iso  = slotToISO(dStr, t);
+      // Is this slot in the past?
+      const slotDate = new Date(iso);
+      if (slotDate <= now) return `<div class="avail-cell past"></div>`;
+      if (!avail) return `<div class="avail-cell loading"></div>`;
+      if (!avail.accessible && avail.accessible !== undefined) return `<div class="avail-cell busy" title="Calendar not shared"></div>`;
+      const free = (avail.slots||{})[iso];
+      return `<div class="avail-cell ${free?'free':'busy'}" title="${free?'Available':'Busy'}">${free?'':'·'}</div>`;
+    }).join('');
+    return `<div class="avail-row" style="${gridStyle}"><div class="avail-time-lbl">${fmtTimeStr(t)}</div>${cells}</div>`;
+  }).join('');
+
+  const notAccessible = avail && avail.accessible === false;
+
+  body.innerHTML = `
+    <div class="avail-cal-head" style="display:grid;${gridStyle}">
+      <div></div>${dayHdrs}
+    </div>
+    ${notAccessible
+      ? `<div style="padding:24px;text-align:center;color:var(--amber)">⚠ Calendar not shared with this account.</div>`
+      : rows}
+    <div class="avail-legend">
+      <div class="avail-legend-item"><div class="avail-legend-dot" style="background:var(--green-bg);border:1px solid #bbf7d0"></div>Available</div>
+      <div class="avail-legend-item"><div class="avail-legend-dot" style="background:var(--surface);border:1px solid var(--border)"></div>Busy</div>
+      <div class="avail-legend-item"><div class="avail-legend-dot" style="background:#f9f9f9;border:1px solid #eee"></div>Past</div>
+    </div>`;
+}
 
 /* ── Init ───────────────────────────────────────────────────────────── */
 async function init() {

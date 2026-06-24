@@ -267,7 +267,8 @@ body { background: var(--ground); color: var(--text); font-family: var(--sans); 
 .avail-pill.busy { background:var(--surface); color:var(--muted); border:1px solid var(--border); }
 .avail-pill::before { content:''; display:inline-block; width:6px; height:6px; border-radius:50%; background:currentColor; }
 .avail-next { margin-top:8px; font-size:12px; color:var(--muted); }
-.avail-next strong { color:var(--amber); }
+.avail-next-btn { background:none; border:none; padding:0; font-family:var(--sans); font-size:12px; font-weight:700; color:var(--amber); cursor:pointer; text-decoration:underline; text-underline-offset:2px; }
+.avail-next-btn:hover { color:var(--accent); }
 .avail-warn { margin-top:10px; font-size:12px; color:var(--amber); }
 .avail-loading { display:flex; align-items:center; gap:12px; padding:32px 0; color:var(--muted); font-size:14px; }
 .spinner-dark { width:16px; height:16px; border:2px solid var(--border); border-top-color:var(--accent); border-radius:50%; animation:spin .7s linear infinite; flex-shrink:0; }
@@ -334,20 +335,6 @@ body { background: var(--ground); color: var(--text); font-family: var(--sans); 
   </div>
 
   <!-- Password modal -->
-  <div id="pw-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:1000;display:none;align-items:center;justify-content:center">
-    <div style="background:#fff;border-radius:14px;padding:32px 28px;width:320px;box-shadow:0 20px 60px rgba(0,0,0,.25);font-family:var(--sans)">
-      <p style="font-family:var(--serif);font-size:18px;font-weight:bold;color:var(--text);margin-bottom:6px">Sales Team Access</p>
-      <p style="font-size:13px;color:var(--muted);margin-bottom:20px">Enter the password to access consultation routing.</p>
-      <input id="pw-input" type="password" placeholder="Password" onkeydown="if(event.key==='Enter')checkPw()"
-        style="width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:8px;font-size:14px;font-family:var(--sans);outline:none;box-sizing:border-box;margin-bottom:8px">
-      <p id="pw-error" style="font-size:12px;color:var(--red);min-height:16px;margin-bottom:12px"></p>
-      <div style="display:flex;gap:8px">
-        <button onclick="closePwModal()" style="flex:1;padding:9px;border:1.5px solid var(--border);background:#fff;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:var(--sans);color:var(--muted)">Cancel</button>
-        <button onclick="checkPw()" style="flex:1;padding:9px;background:var(--accent);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--sans)">Enter</button>
-      </div>
-    </div>
-  </div>
-
   <!-- Availability modal -->
   <div id="avail-modal" style="display:none" class="avail-modal-overlay" onclick="if(event.target===this)closeAvailModal()">
     <div class="avail-modal">
@@ -496,31 +483,8 @@ async function refreshBQ() {
   }
 }
 
-/* ── Route password gate ─────────────────────────────────────────────── */
-let routeUnlocked = false;
-function gateRoute() {
-  if (routeUnlocked) { switchTab('route'); return; }
-  const modal = document.getElementById('pw-modal');
-  modal.style.display = 'flex';
-  setTimeout(() => document.getElementById('pw-input').focus(), 50);
-}
-function closePwModal() {
-  document.getElementById('pw-modal').style.display = 'none';
-  document.getElementById('pw-input').value = '';
-  document.getElementById('pw-error').textContent = '';
-}
-function checkPw() {
-  const val = document.getElementById('pw-input').value;
-  if (val === 'manifest2025') {
-    routeUnlocked = true;
-    closePwModal();
-    switchTab('route');
-  } else {
-    document.getElementById('pw-error').textContent = 'Incorrect password. Try again.';
-    document.getElementById('pw-input').value = '';
-    document.getElementById('pw-input').focus();
-  }
-}
+/* ── Route tab (no password) ─────────────────────────────────────────── */
+function gateRoute() { switchTab('route'); }
 
 /* ── Tabs ───────────────────────────────────────────────────────────── */
 let activeTab = 'pods';
@@ -944,7 +908,8 @@ function resultCard(a, rank) {
       }).join('');
       availHtml = `<div class="avail-slots">${pills}</div>`;
       if (!hasFreeSlot && av.nextAvailable) {
-        availHtml += `<div class="avail-next">→ Next available: <strong>${esc(fmtSlotISO(av.nextAvailable))}</strong></div>`;
+        const nextIso = av.nextAvailable;
+        availHtml += `<div class="avail-next">→ Next available: <button class="avail-next-btn" onclick="bookSlot('${nextIso}','${esc(a.email)}','${esc(a.name)}')">📅 ${esc(fmtSlotISO(nextIso))}</button></div>`;
       }
     }
   }
@@ -953,7 +918,7 @@ function resultCard(a, rank) {
     ? ''
     : a.link&&a.link!=='N/A'
       ? `<a class="btn-book" href="${esc(a.link)}" target="_blank" rel="noopener">Book ↗</a>`
-      : `<span class="btn-book-off">No booking link</span>`;
+      : '';
   return `<div class="atty-card">
     <div class="score-bar ${bc}"></div>
     <div class="atty-body">

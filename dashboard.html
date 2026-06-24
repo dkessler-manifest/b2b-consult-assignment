@@ -59,27 +59,31 @@ body { background: var(--ground); color: var(--text); font-family: var(--sans); 
 /* ── Flip Cards ── */
 .cards-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
 
-.flip-scene { perspective: 1100px; }
+.flip-scene { }
 .flip-card {
   position: relative; height: 440px;
-  transform-style: preserve-3d;
-  transition: transform 0.55s cubic-bezier(0.45, 0.05, 0.25, 1);
+  perspective: 1100px;
   cursor: pointer; user-select: none;
 }
-.flip-card.flipped { transform: rotateY(180deg); }
 
 .flip-face {
   position: absolute; inset: 0;
   backface-visibility: hidden; -webkit-backface-visibility: hidden;
   border-radius: var(--radius); overflow: hidden; border: 1.5px solid var(--border);
+  transition: transform 0.55s cubic-bezier(0.45, 0.05, 0.25, 1);
 }
-.flip-front { background: #fff; display: flex; flex-direction: column; overflow: clip; }
+.flip-front {
+  background: #fff; display: flex; flex-direction: column; overflow-y: auto;
+  transform: rotateY(0deg);
+}
+.flip-card.flipped .flip-front { transform: rotateY(-180deg); }
 .fc-scroll-wrap { display: flex; flex-direction: column; flex: 1; overflow-y: auto; min-height: 0; }
 .flip-back {
   transform: rotateY(180deg);
   background: var(--accent); border-color: var(--accent); color: #fff;
   display: flex; flex-direction: column; padding: 24px 22px 18px;
 }
+.flip-card.flipped .flip-back { transform: rotateY(0deg); }
 
 /* Front face content */
 .fc-header { padding: 18px 20px 14px; border-bottom: 1px solid var(--border); }
@@ -649,26 +653,24 @@ function buildCard(a, cap, slug) {
 
   const front = `
     <div class="flip-face flip-front" onclick="toggleFlip('${esc(slug)}')">
-      <div class="fc-scroll-wrap">
-        <div class="fc-header">
-          <div class="fc-top">
-            <div>
-              <div class="fc-name">${esc(a.podName||a.name)}</div>
-              <div class="fc-sub">${esc(a.name)}</div>
-            </div>
-            <div class="fc-badges">
-              <span class="fc-status ${sCls}">${sLbl}</span>
-              ${capFront}
-            </div>
+      <div class="fc-header">
+        <div class="fc-top">
+          <div>
+            <div class="fc-name">${esc(a.podName||a.name)}</div>
+            <div class="fc-sub">${esc(a.name)}</div>
           </div>
-          <p class="fc-email">${esc(a.email)}</p>
-          <p class="fc-type">${esc(a.tags.join(' · '))}</p>
-          ${sizes ? `<div class="fc-sizes">${sizes}</div>` : ''}
-          ${dns}${cta}
+          <div class="fc-badges">
+            <span class="fc-status ${sCls}">${sLbl}</span>
+            ${capFront}
+          </div>
         </div>
-        ${body ? `<div class="fc-body">${body}</div>` : ''}
-        <div class="fc-hint">Tap to see capacity →</div>
+        <p class="fc-email">${esc(a.email)}</p>
+        <p class="fc-type">${esc(a.tags.join(' · '))}</p>
+        ${sizes ? `<div class="fc-sizes">${sizes}</div>` : ''}
+        ${dns}${cta}
       </div>
+      ${body ? `<div class="fc-body">${body}</div>` : ''}
+      <div class="fc-hint">Tap to see capacity →</div>
     </div>`;
 
   // ── Back ──

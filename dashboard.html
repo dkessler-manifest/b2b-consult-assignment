@@ -262,6 +262,8 @@ body { background: var(--ground); color: var(--text); font-family: var(--sans); 
 .avail-slots { display:flex; flex-wrap:wrap; gap:6px; margin-top:12px; }
 .avail-pill { font-size:11px; font-weight:600; padding:4px 10px; border-radius:100px; display:flex; align-items:center; gap:5px; }
 .avail-pill.free { background:var(--green-bg); color:var(--green); }
+.avail-pill.bookable { cursor:pointer; transition:filter .12s; }
+.avail-pill.bookable:hover { filter:brightness(.92); }
 .avail-pill.busy { background:var(--surface); color:var(--muted); border:1px solid var(--border); }
 .avail-pill::before { content:''; display:inline-block; width:6px; height:6px; border-radius:50%; background:currentColor; }
 .avail-next { margin-top:8px; font-size:12px; color:var(--muted); }
@@ -934,7 +936,10 @@ function resultCard(a, rank) {
       const pills   = S.slots.map(slot=>{
         const free = (av.slots||{})[slot.iso];
         const lbl  = slot.label.split(' · ').slice(1).join(' · ') || slot.label;
-        return `<span class="avail-pill ${free?'free':'busy'}">${esc(lbl)}</span>`;
+        if (free) {
+          return `<span class="avail-pill free bookable" title="Click to book this slot" onclick="bookSlot('${slot.iso}','${esc(a.email)}','${esc(a.name)}')">${esc(lbl)}</span>`;
+        }
+        return `<span class="avail-pill busy">${esc(lbl)}</span>`;
       }).join('');
       availHtml = `<div class="avail-slots">${pills}</div>`;
       if (!hasFree && av.nextAvailable) {
@@ -1188,13 +1193,13 @@ function renderAvailGrid(days, avail) {
     </div>`;
 }
 
-function bookSlot(iso) {
+function bookSlot(iso, email, name) {
+  email = email || _availModal.email || '';
+  name  = name  || _availModal.name  || 'Attorney';
   const start  = new Date(iso);
   const end    = new Date(start.getTime() + 30 * 60 * 1000);
   const fmt    = d => d.toISOString().replace(/[-:]/g,'').replace(/\.\d{3}/,'');
   const dates  = fmt(start) + '/' + fmt(end);
-  const name   = _availModal.name || 'Attorney';
-  const email  = _availModal.email || '';
   const title  = encodeURIComponent('B2B Consultation – ' + name);
   const detail = encodeURIComponent('Booked via Manifest B2B routing tool.\n\nAttorney: ' + name);
   const url    = 'https://calendar.google.com/calendar/render?action=TEMPLATE'

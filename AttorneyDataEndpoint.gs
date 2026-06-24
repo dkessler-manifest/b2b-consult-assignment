@@ -516,6 +516,38 @@ function createBQRefreshTrigger() {
   SpreadsheetApp.getUi().alert('Daily 6 AM refresh trigger installed.');
 }
 
+// ── Calendar Access Test ──────────────────────────────────────────────────
+// Run this function once from the Apps Script editor to verify calendar access.
+// Open View → Logs after running to see results.
+
+function testCalendarAccess() {
+  const emails = [
+    'm.dillinger@manifestlaw.com',
+    'n.nair@manifestlaw.com',
+    'a.sheinfeld@manifestlaw.com',
+    'k.mclaughlin@manifestlaw.com',
+    'n.zaidi@manifestlaw.com',
+    'l.maxwell@manifestlaw.com',
+  ];
+
+  const now  = new Date();
+  const end  = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+
+  emails.forEach(email => {
+    try {
+      const cal = CalendarApp.getCalendarById(email);
+      if (!cal) {
+        Logger.log('FAIL – calendar not found: ' + email);
+        return;
+      }
+      const events = cal.getEvents(now, end);
+      Logger.log('OK – ' + email + ' | events next 7 days: ' + events.length);
+    } catch (err) {
+      Logger.log('ERROR – ' + email + ': ' + err.message);
+    }
+  });
+}
+
 // ── POST: append to Assignment Log ────────────────────────────────────────
 
 function doPost(e) {

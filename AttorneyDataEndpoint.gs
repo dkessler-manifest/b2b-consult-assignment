@@ -533,8 +533,12 @@ function checkAvailability(params) {
   var slots  = (params.slots  || '').split(',').map(function(s){ return s.trim(); }).filter(Boolean);
   if (!emails.length || !slots.length) return {};
 
-  var SLOT_MS = 30 * 60 * 1000;
-  var result  = {};
+  var SLOT_MS   = 30 * 60 * 1000;
+  var slotDates = slots.map(function(s){ return new Date(s); });
+  // One window covering all requested slots — single getEvents call per attorney
+  var winStart  = new Date(Math.min.apply(null, slotDates.map(function(d){ return d.getTime(); })));
+  var winEnd    = new Date(Math.max.apply(null, slotDates.map(function(d){ return d.getTime(); })) + SLOT_MS);
+  var result    = {};
 
   for (var ei = 0; ei < emails.length; ei++) {
     var email = emails[ei];
@@ -543,20 +547,24 @@ function checkAvailability(params) {
       var cal = CalendarApp.getCalendarById(email);
       if (!cal) { entry.accessible = false; result[email] = entry; continue; }
 
+      // Fetch all events in the window once, then check each slot in memory
+      var events = cal.getEvents(winStart, winEnd);
+      var busy   = events.map(function(ev){
+        return { s: ev.getStartTime().getTime(), e: ev.getEndTime().getTime() };
+      });
+
       var allBusy = true;
       for (var si = 0; si < slots.length; si++) {
-        var iso    = slots[si];
-        var start  = new Date(iso);
-        var end    = new Date(start.getTime() + SLOT_MS);
-        var events = cal.getEvents(start, end);
-        var free   = events.length === 0;
+        var iso  = slots[si];
+        var ss   = new Date(iso).getTime();
+        var se   = ss + SLOT_MS;
+        var free = !busy.some(function(b){ return b.s < se && b.e > ss; });
         entry.slots[iso] = free;
         if (free) allBusy = false;
       }
 
       if (allBusy) {
-        var slotDates = slots.map(function(s){ return new Date(s); }).sort(function(a,b){ return a-b; });
-        entry.nextAvailable = findNextAvailable(cal, slotDates[0]);
+        entry.nextAvailable = findNextAvailable(cal, slotDates.slice().sort(function(a,b){ return a-b; })[0]);
       }
     } catch(err) {
       entry.accessible = false;
@@ -569,8 +577,16 @@ function checkAvailability(params) {
 
 function findNextAvailable(cal, startFrom) {
   var SLOT_MS  = 30 * 60 * 1000;
-  var MAX_ITER = 600; // ~12.5 days of 30-min slots
-  var current  = new Date(startFrom.getTime() + SLOT_MS);
+  var MAX_ITER = 600;
+  var lookAhead = new Date(startFrom.getTime() + 14 * 24 * 60 * 60 * 1000);
+
+  // Single API call covering 14 days; check slots in memory
+  var events = cal.getEvents(startFrom, lookAhead);
+  var busy   = events.map(function(ev){
+    return { s: ev.getStartTime().getTime(), e: ev.getEndTime().getTime() };
+  });
+
+  var current = new Date(startFrom.getTime() + SLOT_MS);
 
   for (var i = 0; i < MAX_ITER; i++) {
     var estHour = parseInt(Utilities.formatDate(current, 'America/New_York', 'H'), 10);
@@ -578,14 +594,12 @@ function findNextAvailable(cal, startFrom) {
     var dayStr  = Utilities.formatDate(current, 'America/New_York', 'yyyy-MM-dd');
 
     if (estHour < 11) {
-      current = _makeETTime(dayStr, 11, 0);
-      continue;
+      current = _makeETTime(dayStr, 11, 0); continue;
     }
     if (estHour >= 17) {
       var p = dayStr.split('-').map(Number);
       var nextDay = new Date(Date.UTC(p[0], p[1]-1, p[2]+1));
-      var nextStr = Utilities.formatDate(nextDay, 'America/New_York', 'yyyy-MM-dd');
-      current = _makeETTime(nextStr, 11, 0);
+      current = _makeETTime(Utilities.formatDate(nextDay, 'America/New_York', 'yyyy-MM-dd'), 11, 0);
       continue;
     }
     if (estMin !== 0 && estMin !== 30) {
@@ -600,9 +614,10 @@ function findNextAvailable(cal, startFrom) {
       }
       continue;
     }
-    var end    = new Date(current.getTime() + SLOT_MS);
-    var events = cal.getEvents(current, end);
-    if (events.length === 0) return current.toISOString();
+
+    var ss = current.getTime(), se = ss + SLOT_MS;
+    var isFree = !busy.some(function(b){ return b.s < se && b.e > ss; });
+    if (isFree) return current.toISOString();
     current = new Date(current.getTime() + SLOT_MS);
   }
   return null;

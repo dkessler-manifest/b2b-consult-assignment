@@ -805,7 +805,9 @@ function step2() {
 }
 
 function step3() {
-  const today = new Date().toISOString().split('T')[0];
+  const etNow = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/New_York' }));
+  const tmrw  = new Date(etNow); tmrw.setDate(tmrw.getDate() + 1);
+  const minDate = etDateStr(tmrw);
   const date  = S.pickerDate || '';
 
   const chips = S.slots.length ? `
@@ -821,7 +823,7 @@ function step3() {
     ? `<p class="slot-max">Maximum of 3 time slots selected.</p>`
     : `<div style="margin-bottom:24px">
         <p class="slot-add-lbl">${S.slots.length ? 'Add another slot' : 'Choose a date'}</p>
-        <input class="date-input" type="date" id="slot-dp" min="${today}" value="${esc(date)}">
+        <input class="date-input" type="date" id="slot-dp" min="${minDate}" value="${esc(date)}">
         ${date ? `
           <p class="slot-add-lbl" style="margin-top:18px">Select a time (11 AM – 5 PM ET)</p>
           <div class="time-grid">
@@ -1006,15 +1008,19 @@ async function checkAvailabilityForMatches(matches) {
   S.availabilityLoading = true;
   const emails = matches.map(a=>a.email).join(',');
   const slots  = S.slots.map(s=>s.iso).join(',');
+  const ctrl   = new AbortController();
+  const timer  = setTimeout(() => ctrl.abort(), 15000);
   try {
     const url = APPS_SCRIPT_URL + '?action=checkAvailability' +
       '&emails=' + encodeURIComponent(emails) +
       '&slots='  + encodeURIComponent(slots);
-    const res  = await fetch(url);
+    const res  = await fetch(url, { signal: ctrl.signal });
+    clearTimeout(timer);
     if (!res.ok) throw new Error('HTTP '+res.status);
     const data = await res.json();
     if (gen === _availGen) { S.availability = data; S.availabilityLoading = false; renderStep(); }
   } catch(e) {
+    clearTimeout(timer);
     console.error('Availability check failed:', e.message);
     if (gen === _availGen) { S.availability = {}; S.availabilityLoading = false; renderStep(); }
   }
@@ -1121,14 +1127,18 @@ async function loadAvailWeek() {
   renderAvailGrid(days, null);
 
   // Fetch
+  const ctrl1 = new AbortController();
+  const timer1 = setTimeout(() => ctrl1.abort(), 15000);
   try {
     const url = APPS_SCRIPT_URL + '?action=checkAvailability' +
       '&emails=' + encodeURIComponent(_availModal.email) +
       '&slots='  + encodeURIComponent(slots.join(','));
-    const res  = await fetch(url);
+    const res  = await fetch(url, { signal: ctrl1.signal });
+    clearTimeout(timer1);
     const data = await res.json();
     _availModal.data = data[_availModal.email] || {};
   } catch(e) {
+    clearTimeout(timer1);
     _availModal.data = { error: e.message };
   }
   renderAvailGrid(days, _availModal.data);
@@ -1158,7 +1168,7 @@ function renderAvailGrid(days, avail) {
       const iso  = slotToISO(dStr, t);
       // Is this slot in the past?
       const slotDate = new Date(iso);
-      if (slotDate <= now) return `<div class="avail-cell past"></div>`;
+      if (slotDate <= now || dStr === todayStr) return `<div class="avail-cell past"></div>`;
       if (!avail) return `<div class="avail-cell loading"></div>`;
       if (!avail.accessible && avail.accessible !== undefined) return `<div class="avail-cell busy" title="Calendar not shared"></div>`;
       const free = (avail.slots||{})[iso];
@@ -1189,7 +1199,7 @@ function renderAvailGrid(days, avail) {
 function bookSlot(iso, email, name, company) {
   email   = email   || _availModal.email || '';
   name    = name    || _availModal.name  || 'Attorney';
-  company = company || S.company || '';
+  company = (company != null) ? company : (S.company || '');
   const start  = new Date(iso);
   const end    = new Date(start.getTime() + 30 * 60 * 1000);
   const fmt    = d => d.toISOString().replace(/[-:]/g,'').replace(/\.\d{3}/,'');
@@ -1370,14 +1380,18 @@ async function loadPodCalWeek() {
 
   renderPodCalGrid(days, null);
 
+  const ctrl2 = new AbortController();
+  const timer2 = setTimeout(() => ctrl2.abort(), 15000);
   try {
     const url  = APPS_SCRIPT_URL + '?action=checkAvailability'
       + '&emails=' + encodeURIComponent(_podDetail.email)
       + '&slots='  + encodeURIComponent(slots.join(','));
-    const res  = await fetch(url);
+    const res  = await fetch(url, { signal: ctrl2.signal });
+    clearTimeout(timer2);
     const data = await res.json();
     _podDetail.data = data[_podDetail.email] || {};
   } catch(e) {
+    clearTimeout(timer2);
     _podDetail.data = { error: e.message };
   }
   renderPodCalGrid(days, _podDetail.data);
@@ -1403,7 +1417,7 @@ function renderPodCalGrid(days, avail) {
       const dStr     = etDateStr(d);
       const iso      = slotToISO(dStr, t);
       const slotDate = new Date(iso);
-      if (slotDate <= now) return `<div class="avail-cell past"></div>`;
+      if (slotDate <= now || dStr === todayStr) return `<div class="avail-cell past"></div>`;
       if (!avail) return `<div class="avail-cell loading"></div>`;
       if (avail.accessible === false) return `<div class="avail-cell busy" title="Calendar not shared"></div>`;
       const free = (avail.slots||{})[iso];
@@ -1448,7 +1462,10 @@ function wizardBook(iso, email, name, podSlug, link) {
 let _pendingPodSlot = null;
 
 function bookPodSlot(iso) {
-  wizardBook(iso, _podDetail.email, _podDetail.name, _podDetail.slug, null);
+  const cap = POD_CAPACITY[_podDetail.slug] || {};
+  const doBook = () => bookSlot(iso, _podDetail.email, _podDetail.name, '');
+  if (cap.label === 'Low') showCapWarn(doBook);
+  else doBook();
 }
 
 /* ── Init ───────────────────────────────────────────────────────────── */
